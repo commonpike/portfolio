@@ -13,8 +13,10 @@ A portfolio of past projects, stored as plain files on disk, read by one central
 ```
 Portfolio.php           the central library — the only file that touches disk
 markdown.php            exporter: Markdown, grouped by year
+json.php                exporter: JSON, callable from the CLI or over HTTP
 tests/Portfolio.php     tester for the library
 tests/markdown.php      tester for that exporter
+tests/json.php          tester for that exporter, CLI only
 tests/common.php        shared setup and helpers — not a tester
 tests/fixtures/         an asset root of its own, used only by the testers
 projects/               the fallback asset root
@@ -102,6 +104,17 @@ php markdown.php --rank=60 > short.md   # only projects ranked 60 or higher
 
 Options are long-form and parsed with `getopt()`, listed in one `OPTIONS` const that also feeds the usage message. Each option that narrows the selection appends a predicate to a `$filters` array, and a project must pass all of them — so adding `--year` or `--type` is one `if` block, not a rewrite. An unparseable value exits 1 with usage on stderr.
 
+`json.php` emits every property of every project and serves both callers:
+
+```sh
+php json.php --rank=60 --type=website --offset=10 --limit=5
+GET json.php?rank=60&type=website&offset=10&limit=5
+```
+
+An exporter that answers to HTTP as well keeps the difference in three places and nowhere else: `parameters()` reads `getopt()` or `$_GET` (unknown query keys are dropped), `fail()` writes usage to stderr and exits 1 or replies `400` with a JSON error body, and the `Content-Type` header is sent only when not on the CLI. Everything after that is SAPI-agnostic. A value that arrives repeated or as an array (`--rank=1 --rank=2`, `?rank[]=1`) fails the same way a malformed one does, rather than being silently coerced.
+
+`type` matches case-insensitively; `offset` and `limit` are applied with `array_slice()` *after* filtering, so paging walks the narrowed list.
+
 Conventions worth keeping in new exporters:
 
 - A line is printed only when the values it uses are non-empty, and a group whose lines all vanish takes its blank line with it — no stray gaps for sparse projects.
@@ -113,10 +126,10 @@ Conventions worth keeping in new exporters:
 ## Testing
 
 ```sh
-php tests/Portfolio.php && php tests/markdown.php
+php tests/Portfolio.php && php tests/markdown.php && php tests/json.php
 ```
 
-Each prints one line per check and exits 1 if any failed, so they double as a commit check. Run them after any change to `Portfolio.php` or an exporter — they are the reason the edge cases don't need rebuilding by hand.
+Each prints one line per check and exits 1 if any failed, so they double as a commit check. `tests/json.php` covers only that exporter's CLI: the HTTP path differs solely in `parameters()`, `fail()` and the `Content-Type` header, and testing it would need a web server, which can't be assumed available. Run them after any change to `Portfolio.php` or an exporter — they are the reason the edge cases don't need rebuilding by hand.
 
 `tests/common.php` is shared setup, not a tester: it defines `BASEDIR` as `tests/fixtures/` *before* requiring the library, sets `ROOT` (`__DIR__ . '/..'`) so testers run from any working directory, and provides `section()`, `check()` and `conclude()`. A tester is then just `require_once __DIR__ . '/common.php';` followed by assertions, ending in `conclude()`.
 

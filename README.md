@@ -9,7 +9,11 @@ No framework, no dependencies, no build step, no database. PHP 8.1 or newer.
 ```sh
 php markdown.php > exports/portfolio.md    # every project
 php markdown.php --rank=60                 # only projects ranked 60 or higher
+
+php json.php --type=website --limit=10     # every property, as JSON
 ```
+
+`json.php` also answers over HTTP, reading the same parameters from the query string: `json.php?rank=60&type=website&offset=10&limit=5`.
 
 ## Where the assets live
 
@@ -46,6 +50,7 @@ Prefix a year or project folder with `_` to park it — `_2026/`, `2012/_draft/`
 |---|---|
 | `Portfolio.php` | the library: reads the assets, returns `Project` objects. The only file that touches disk |
 | `markdown.php` | exporter: Markdown, grouped by year |
+| `json.php` | exporter: JSON, from the command line or over HTTP |
 | `tests/` | one tester per script, plus the fixtures they run against |
 | `projects/` | local asset root; contents ignored by git |
 | `exports/` | generated output; ignored by git |
@@ -65,7 +70,7 @@ A new export format is a new script next to `markdown.php` that loops over that 
 ## Tests
 
 ```sh
-php tests/Portfolio.php && php tests/markdown.php
+php tests/Portfolio.php && php tests/markdown.php && php tests/json.php
 ```
 
 Each prints one line per check and exits non-zero if any failed. They run against the fixtures in `tests/fixtures/`, never the real archive.

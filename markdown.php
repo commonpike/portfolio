@@ -13,7 +13,12 @@ const OPTIONS = ['rank:'];
 
 function usage(): never
 {
-    fwrite(STDERR, "usage: php markdown.php [--" . implode('] [--', OPTIONS) . "]\n");
+    $usage = implode('] [--', array_map(
+        fn($option) => rtrim($option, ':') . '=<value>',
+        OPTIONS
+    ));
+
+    fwrite(STDERR, "usage: php markdown.php [--$usage]\n");
     exit(1);
 }
 
