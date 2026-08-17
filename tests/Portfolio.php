@@ -6,10 +6,10 @@
  *   php tests/Portfolio.php
  *
  * The fixtures cover every parsed property, the credit fields, an unreadable
- * rank, a scheme-less and a scheme'd link, unrecognised text assets, images
- * versus other files, both preview outcomes, and all three reasons a folder is
- * skipped. Add a case by adding a folder under tests/fixtures/2099/ and an
- * assertion here.
+ * rank, an empty type, a scheme-less and a scheme'd link, unrecognised text
+ * assets, images versus other files, both preview outcomes, and all three
+ * reasons a folder is skipped. Add a case by adding a folder under
+ * tests/fixtures/2099/ and an assertion here.
  */
 
 require_once __DIR__ . '/common.php';
@@ -66,8 +66,12 @@ section('Defaults and fallbacks');
 
 $sparse = Portfolio::project('2099', 'sparse');
 
-check('rank falls back when the asset is not numeric', Portfolio::project('2099', 'bad-rank')->rank, Project::DEFAULT_RANK);
+$badRank = Portfolio::project('2099', 'bad-rank');
+
+check('rank falls back when the asset is not numeric', $badRank->rank, Project::DEFAULT_RANK);
 check('rank falls back when the asset is missing', $sparse->rank, Project::DEFAULT_RANK);
+check('type falls back when the asset is missing', $sparse->type, Project::DEFAULT_TYPE);
+check('type falls back when the asset is empty', $badRank->type, Project::DEFAULT_TYPE);
 check('title falls back to the slug', $sparse->title, 'Sparse');
 check('missing string is empty, never null', $sparse->owner, '');
 check('missing array is empty', $sparse->roles, []);

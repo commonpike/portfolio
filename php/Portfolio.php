@@ -24,6 +24,7 @@ class Project
     private const RESERVED = ['year', 'slug', 'path', 'images', 'files', 'preview', 'other'];
 
     public const DEFAULT_RANK = 50;
+    public const DEFAULT_TYPE = 'project';
 
     public string $year = '';
     public string $slug = '';
@@ -32,7 +33,8 @@ class Project
 
     /** Sort weight; DEFAULT_RANK when rank.txt is missing or not a number. */
     public int $rank = self::DEFAULT_RANK;
-    public string $type = '';
+    /** DEFAULT_TYPE when type.txt is missing or empty. */
+    public string $type = self::DEFAULT_TYPE;
     /** Falls back to the slug, ucfirst'ed. */
     public string $title = '';
     /** https:// is prepended when the asset omits a scheme. */
@@ -86,6 +88,9 @@ class Project
     {
         if ($this->title === '') {
             $this->title = ucfirst($this->slug);
+        }
+        if ($this->type === '') {
+            $this->type = self::DEFAULT_TYPE;
         }
         if ($this->preview === '') {
             $this->preview = $this->images[0] ?? '';

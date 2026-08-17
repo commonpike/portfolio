@@ -4,12 +4,11 @@
  *
  *   php php/markdown.php > portfolio.md            every project
  *   php php/markdown.php --rank=60 > short.md      only projects ranked 60 or higher
+ *   php php/markdown.php --basedir=/mnt/other      read another asset root
  */
 
-require_once __DIR__ . '/Portfolio.php';
-
 /** Accepted long options; a trailing ':' means the option takes a value. */
-const OPTIONS = ['rank:'];
+const OPTIONS = ['basedir:', 'rank:'];
 
 function usage(): never
 {
@@ -58,6 +57,18 @@ $options = getopt('', OPTIONS);
 if ($options === false) {
     usage();
 }
+
+// --basedir has to be settled before the library is required, because that is
+// where BASEDIR gets its default. A wrapper that defined it already wins, as it
+// does everywhere else.
+if (isset($options['basedir'])) {
+    if (!is_string($options['basedir']) || !is_dir($options['basedir'])) {
+        usage();
+    }
+    defined('BASEDIR') || define('BASEDIR', realpath($options['basedir']));
+}
+
+require_once __DIR__ . '/Portfolio.php';
 
 // One entry per option that narrows the selection; a project must pass them all.
 $filters = [];

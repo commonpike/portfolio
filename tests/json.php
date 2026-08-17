@@ -14,20 +14,23 @@
 require_once __DIR__ . '/common.php';
 
 /**
- * Run php/json.php as its own process, against the fixtures, so its option parsing
- * is exercised for real: getopt() reads the actual command line.
+ * Run php/json.php as its own process, pointed at the fixtures with --basedir,
+ * so its option parsing is exercised for real: getopt() reads the actual
+ * command line.
  */
-function json(string $arguments, string $stream = '2>/dev/null'): array
+function json(string $arguments, string $stream = '2>/dev/null', string $basedir = BASEDIR): array
 {
-    $code = sprintf(
-        'define("BASEDIR", %s); require %s;',
-        var_export(BASEDIR, true),
-        var_export(ROOT . '/php/json.php', true)
+    $command = sprintf(
+        'php %s --basedir=%s %s %s',
+        escapeshellarg(ROOT . '/php/json.php'),
+        escapeshellarg($basedir),
+        $arguments,
+        $stream
     );
 
     $lines = [];
     $status = 0;
-    exec('php -r ' . escapeshellarg($code) . ' -- ' . $arguments . ' ' . $stream, $lines, $status);
+    exec($command, $lines, $status);
 
     return ['status' => $status, 'output' => implode("\n", $lines)];
 }
@@ -46,10 +49,25 @@ function slugs(string $arguments = ''): array
     return array_map(fn($project) => $project->slug, projects($arguments));
 }
 
+/** The slugs in a cache file, which holds plain arrays rather than objects. */
+function cached(string $file): array
+{
+    return array_column((array) json_decode((string) @file_get_contents($file), true), 'slug');
+}
+
+/** Where json.php caches this asset root, keyed the same way the exporter does. */
+$cache = ROOT . '/php/cache/' . md5(realpath(BASEDIR)) . '.json';
+
+/** Every fixture project, in the library's order: what an unfiltered run gives. */
+$all = ['full', 'bad-rank', 'no-preview', 'sparse', 'rank-low'];
+
+// Start cold, so a cache left by an earlier run cannot decide what is checked.
+@unlink($cache);
+
 section('Document');
 
 check('output is valid JSON', json_decode(json('')['output']) !== null, true);
-check('every project, in the library\'s order', slugs(), ['full', 'bad-rank', 'no-preview', 'sparse', 'rank-low']);
+check('--basedir reads the root it is given', slugs(), $all);
 
 $full = projects('--limit=1')[0] ?? null;
 
@@ -94,16 +112,54 @@ check('a non-numeric --rank is refused', json('--rank=x')['status'], 1);
 check('a non-numeric --limit is refused', json('--limit=abc')['status'], 1);
 check('a negative --offset is refused', json('--offset=-1')['status'], 1);
 check('a repeated option is refused', json('--rank=1 --rank=2')['status'], 1);
-// getopt() drops an option given without a value, so --type= never arrives and
-// cannot be refused. Over HTTP ?type= does arrive, and fail()s as empty.
-check('an empty --type is dropped, selecting everything', slugs('--type='), ['full', 'bad-rank', 'no-preview', 'sparse', 'rank-low']);
+// getopt() drops an option given without a value, so --type= never arrives here.
+// Over HTTP ?type= does arrive, and is treated the same way: any type.
+check('an empty --type selects everything', slugs('--type='), $all);
 check('an empty --type is not an error', json('--type=')['status'], 0);
+check('a whitespace --type selects everything', slugs('--type="  "'), $all);
+check('a repeated --type is refused', json('--type=website --type=other')['status'], 1);
 check('nothing is printed on stdout when refused', json('--rank=x')['output'], '');
 check(
     'the reason and the usage go to stderr',
     json('--rank=x', '2>&1 1>/dev/null')['output'],
-    "rank must be a whole number\nusage: php php/json.php [--rank=<value>] [--type=<value>] [--offset=<value>] [--limit=<value>]"
+    "rank must be a whole number\nusage: php php/json.php [--basedir=<value>] [--rank=<value>] [--type=<value>] [--offset=<value>] [--limit=<value>] [--refresh]"
+);
+check('a --basedir that is not a directory is refused', json('', '2>/dev/null', ROOT . '/nope')['status'], 1);
+check(
+    'the reason names basedir',
+    json('', '2>&1 1>/dev/null', ROOT . '/nope')['output'],
+    "basedir must be a directory\nusage: php php/json.php [--basedir=<value>] [--rank=<value>] [--type=<value>] [--offset=<value>] [--limit=<value>] [--refresh]"
 );
 check('an unknown option is ignored', slugs('--bogus=1 --limit=1'), ['full']);
+
+section('Cache');
+
+@unlink($cache);
+$narrowed = slugs('--rank=51');
+
+check('a narrowed run caches the whole listing anyway', cached($cache), $all);
+check('and still prints only what was asked for', $narrowed, ['full']);
+
+// A tampered cache is the proof of where a listing came from: nothing in the
+// fixtures can produce this project, so only the cache can.
+file_put_contents($cache, json_encode([['slug' => 'from-cache']]));
+
+check('a fresh cache is read instead of the asset root', slugs(), ['from-cache']);
+check('--refresh rebuilds it', slugs('--refresh'), $all);
+check('the rebuild is written back', cached($cache), $all);
+
+file_put_contents($cache, json_encode([['slug' => 'from-cache']]));
+touch($cache, time() - 86400); // a day old: past any TTL worth setting
+
+check('a cache past its TTL is rebuilt', slugs(), $all);
+
+$elsewhere = ROOT . '/php/cache/' . md5(realpath(ROOT . '/tests')) . '.json';
+@unlink($elsewhere);
+json('', '2>/dev/null', ROOT . '/tests'); // a real directory holding no years
+
+check('another asset root caches separately', [is_file($elsewhere), cached($cache)], [true, $all]);
+
+@unlink($elsewhere);
+@unlink($cache); // leave nothing behind: the next run should start cold too
 
 conclude();

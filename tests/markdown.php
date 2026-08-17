@@ -55,26 +55,36 @@ MARKDOWN . "\n");
 section('Command line');
 
 /**
- * Run php/markdown.php as its own process, against the fixtures, so its option
- * parsing is exercised for real: getopt() reads the actual command line.
+ * Run php/markdown.php as its own process, pointed at the fixtures with
+ * --basedir, so its option parsing is exercised for real: getopt() reads the
+ * actual command line.
  */
-function markdown(string $arguments): array
+function markdown(string $arguments, string $basedir = BASEDIR): array
 {
-    $code = sprintf(
-        'define("BASEDIR", %s); require %s;',
-        var_export(BASEDIR, true),
-        var_export(ROOT . '/php/markdown.php', true)
+    $command = sprintf(
+        'php %s --basedir=%s %s 2>/dev/null',
+        escapeshellarg(ROOT . '/php/markdown.php'),
+        escapeshellarg($basedir),
+        $arguments
     );
 
     $lines = [];
     $status = 0;
-    exec('php -r ' . escapeshellarg($code) . ' -- ' . $arguments . ' 2>/dev/null', $lines, $status);
+    exec($command, $lines, $status);
 
     return ['status' => $status, 'headings' => array_values(array_filter(
         $lines,
         fn($line) => str_starts_with($line, '### ')
     ))];
 }
+
+$listing = markdown('');
+
+check('--basedir reads the root it is given', $listing['headings'], [
+    '### Full Example', '### Bad-rank', '### No-preview', '### Sparse', '### Rank-low',
+]);
+check('--basedir exits 0', $listing['status'], 0);
+check('a --basedir that is not a directory is refused', markdown('', ROOT . '/nope'), ['status' => 1, 'headings' => []]);
 
 $shortlist = markdown('--rank=51');
 
