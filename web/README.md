@@ -91,15 +91,38 @@ produces the data.
 src/
   config.ts               the .env settings, and assetUrl() for media paths
   types.ts                Project, mirroring the PHP class of the same name
+  router.ts               the three pages, and their titles
+  theme.ts                Aura, in blue
   composables/
     useProjects.ts        the listing: one shared fetch, loaded on demand
     useTheme.ts           light/dark, remembered in localStorage
+  views/
+    PortfolioView.vue     pike::portfolio — intro and the listing
+    CvView.vue            pike::cv
+    ThisView.vue          about::this
   components/
-    SiteHeader.vue        the bar, with the theme switch
-    SiteIntro.vue         the big title and the intro copy
-    ProjectsListing.vue   the projects — a raw dump for now
+    SiteHeader.vue        the nav, with the theme switch
+    SiteIntro.vue         a page's heading, with its copy slotted in
+    PageTitle.vue         a title with its :: in the primary colour
+    ProjectsListing.vue   filters, paging, and the projects by year
+    ProjectCard.vue       one project, in either view
+    ListingSelect.vue     one labelled filter
+    ListingPager.vue      00, 01, 02 …
   assets/main.css         base styles, on PrimeVue's design tokens
 ```
+
+A page is one entry in `src/router.ts`: the title there is the whole of its
+identity — nav text, heading and `document.title` all read it, which is why
+`about::this` can differ from `pike::portfolio` in more than its last word.
+
+Routing uses history mode, so a server that hosts the built site has to fall back
+to `index.html` for unknown paths, or a refresh of `/cv` will 404. `npm run dev`
+does that on its own.
+
+The listing fetches everything once and narrows it in the browser: Type comes from
+the types the projects actually declare, Show is a threshold on `rank`, Limit and
+the pager slice what is left. Grid and detail are the same markup under different
+CSS, so switching neither refetches nor collapses an unfolded description.
 
 ## Theme
 

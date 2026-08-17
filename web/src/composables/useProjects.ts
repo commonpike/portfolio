@@ -1,6 +1,12 @@
-import { readonly, ref } from 'vue'
+import { readonly, ref, type DeepReadonly } from 'vue'
 import { config, missingSettings } from '@/config'
 import type { Project } from '@/types'
+
+/**
+ * A project as consumers get it. The state below is shared, so it is handed out
+ * readonly; components take this rather than Project, which props are anyway.
+ */
+export type ReadonlyProject = DeepReadonly<Project>
 
 /**
  * Every project, from the JSON exporter. The whole listing is fetched once and
