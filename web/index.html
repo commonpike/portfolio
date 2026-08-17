@@ -1,10 +1,24 @@
-<!DOCTYPE html>
-<html lang="">
+<!doctype html>
+<html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pike::portfolio</title>
+    <meta name="description" content="A portfolio of past projects." />
+    <script>
+      // Set the theme before first paint, so a dark reader gets no flash of
+      // white. The key and the class mirror src/composables/useTheme.ts.
+      try {
+        const stored = localStorage.getItem('pike-portfolio-scheme')
+        const dark =
+          stored === 'dark' ||
+          (stored === null && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        if (dark) document.documentElement.classList.add('app-dark')
+      } catch {
+        // A browser refusing localStorage just gets the light theme.
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>

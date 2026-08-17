@@ -14,6 +14,11 @@ dist-ssr
 coverage
 *.local
 
+# Local configuration. .env.dist is the tracked template: copy it to .env.
+.env
+.env.*
+!.env.dist
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

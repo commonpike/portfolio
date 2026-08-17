@@ -1,11 +1,14 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import SiteHeader from '@/components/SiteHeader.vue'
+import SiteIntro from '@/components/SiteIntro.vue'
+import ProjectsListing from '@/components/ProjectsListing.vue'
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
-</template>
+  <SiteHeader />
 
-<style scoped></style>
+  <main class="page">
+    <SiteIntro />
+    <ProjectsListing />
+  </main>
+</template>

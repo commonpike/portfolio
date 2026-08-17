@@ -8,6 +8,8 @@ A portfolio of past projects, stored as plain files on disk, read by one central
 
 **Stay slim.** No framework, no composer dependencies, no build step, no database, no class hierarchies beyond the two classes described here. If a change adds indirection or tooling, it's probably the wrong change.
 
+That rule is about the PHP. `web/` holds a TypeScript/Vue single-page app under deliberately different constraints — npm dependencies and a build step are fine there, and it has no testers, since the testers here cover the code that produces its data. It reads the portfolio only through `php/json.php`. See `web/README.md`.
+
 ## Layout
 
 ```
@@ -23,6 +25,7 @@ tests/common.php        shared setup and helpers — not a tester
 tests/fixtures/         an asset root of its own, used only by the testers
 projects/               the fallback asset root
 exports/                generated output
+web/                    the Vue SPA — its own conventions, see web/README.md
 <BASEDIR>/
   <year>/
     <project>/          one folder per project, holding its assets

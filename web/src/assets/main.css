@@ -1,0 +1,70 @@
+/**
+ * Base styles. Colours come from PrimeVue's Aura tokens (--p-*), which flip with
+ * the .app-dark class on <html>, so nothing here needs a dark-mode variant.
+ */
+
+:root {
+  --font-body: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk Variable', var(--font-body);
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  --page-width: 68rem;
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0;
+  text-wrap: balance;
+}
+
+a {
+  color: var(--p-primary-color);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+/** The one column everything sits in. */
+.page {
+  width: 100%;
+  max-width: var(--page-width);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/** A bordered panel, for anything that is a block of its own. */
+.panel {
+  background: var(--p-content-background);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius, 0.75rem);
+}
+
+.muted {
+  color: var(--p-text-muted-color);
+}
