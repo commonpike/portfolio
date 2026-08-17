@@ -68,3 +68,18 @@ a {
 .muted {
   color: var(--p-text-muted-color);
 }
+
+/**
+ * Intro copy. Global rather than scoped, because each page writes its own inside
+ * SiteIntro's slot, and slotted content belongs to the page's scope.
+ */
+.lede,
+.intro p {
+  max-width: 60ch;
+}
+
+.lede {
+  margin: clamp(1.5rem, 4vh, 2.5rem) 0 1.25rem;
+  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  line-height: 1.5;
+}

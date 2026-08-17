@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
+import { RouterLink } from 'vue-router'
+import { pages } from '@/router'
+import PageTitle from '@/components/PageTitle.vue'
 import { useTheme } from '@/composables/useTheme'
 
 const { scheme, toggle } = useTheme()
@@ -8,7 +11,11 @@ const { scheme, toggle } = useTheme()
 <template>
   <header class="site-header">
     <div class="page bar">
-      <span class="mark">pike<span class="colons">::</span>portfolio</span>
+      <nav class="nav" aria-label="Pages">
+        <RouterLink v-for="page in pages" :key="page.path" :to="page.path" class="page-link">
+          <PageTitle :title="page.meta!.title" />
+        </RouterLink>
+      </nav>
 
       <Button
         :icon="scheme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
@@ -40,14 +47,32 @@ const { scheme, toggle } = useTheme()
   min-height: 4rem;
 }
 
-.mark {
-  font-family: var(--font-display);
-  font-size: 1.0625rem;
-  font-weight: 600;
+.nav {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: 0.9375rem;
   letter-spacing: -0.01em;
 }
 
-.colons {
-  color: var(--p-primary-color);
+.page-link {
+  color: var(--p-text-muted-color);
+  text-decoration: none;
+  padding-bottom: 0.15em;
+  border-bottom: 2px solid transparent;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.page-link:hover {
+  color: var(--p-text-color);
+}
+
+/* vue-router marks the current page; exact, so / is not active everywhere. */
+.page-link.router-link-exact-active {
+  color: var(--p-text-color);
+  border-bottom-color: var(--p-primary-color);
 }
 </style>

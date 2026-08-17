@@ -1,14 +1,12 @@
 <script setup lang="ts">
+import { RouterView } from 'vue-router'
 import SiteHeader from '@/components/SiteHeader.vue'
-import SiteIntro from '@/components/SiteIntro.vue'
-import ProjectsListing from '@/components/ProjectsListing.vue'
 </script>
 
 <template>
   <SiteHeader />
 
   <main class="page">
-    <SiteIntro />
-    <ProjectsListing />
+    <RouterView />
   </main>
 </template>
