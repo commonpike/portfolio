@@ -5,23 +5,18 @@ import { ref, watchEffect } from 'vue'
  * darkModeSelector (see main.ts), so toggling it on <html> flips the theme
  * tokens and the color-scheme the rest of the CSS builds on.
  *
- * index.html applies the class before first paint using the same key, so a dark
- * reader does not get a flash of white. Keep the two in step.
+ * Dark is the default: only an explicit choice of light turns it off. index.html
+ * applies the class before first paint using the same key, so the first frame is
+ * already dark. Keep the two in step.
  */
 export const DARK_CLASS = 'app-dark'
 export const STORAGE_KEY = 'pike-portfolio-scheme'
 
 export type Scheme = 'light' | 'dark'
 
-/** What was chosen last, or what the system asks for. */
+/** What was chosen last; dark until something else is chosen. */
 function initial(): Scheme {
-  const stored = localStorage.getItem(STORAGE_KEY)
-
-  if (stored === 'light' || stored === 'dark') {
-    return stored
-  }
-
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return localStorage.getItem(STORAGE_KEY) === 'light' ? 'light' : 'dark'
 }
 
 // Module level, so every component shares the one scheme.
