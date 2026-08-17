@@ -1,6 +1,6 @@
 <?php
 /**
- * Tester for Portfolio.php: which folders are listed, and how assets become
+ * Tester for php/Portfolio.php: which folders are listed, and how assets become
  * properties.
  *
  *   php tests/Portfolio.php

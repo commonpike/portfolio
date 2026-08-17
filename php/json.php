@@ -2,14 +2,14 @@
 /**
  * Exporter: the portfolio as JSON — every property of every project.
  *
- *   php json.php                                   every project
- *   php json.php --rank=60 --type=website          narrowed
- *   php json.php --offset=10 --limit=5             a page of the list
+ *   php php/json.php                               every project
+ *   php php/json.php --rank=60 --type=website      narrowed
+ *   php php/json.php --offset=10 --limit=5         a page of the list
  *
  * The same parameters are read from the query string when this is requested
  * over HTTP:
  *
- *   GET json.php?rank=60&type=website&offset=10&limit=5
+ *   GET php/json.php?rank=60&type=website&offset=10&limit=5
  *
  * Bad input exits 1: with usage on stderr from the command line, as a 400 with
  * a JSON error body over HTTP.
@@ -48,7 +48,7 @@ function fail(string $message): never
             fn($option) => rtrim($option, ':') . '=<value>',
             OPTIONS
         ));
-        fwrite(STDERR, "$message\nusage: php json.php [--$usage]\n");
+        fwrite(STDERR, "$message\nusage: php php/json.php [--$usage]\n");
         exit(1);
     }
 

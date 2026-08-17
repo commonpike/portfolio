@@ -4,16 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Intent
 
-A portfolio of past projects, stored as plain files on disk, read by one central PHP library (`Portfolio.php`) and rendered by a handful of small exporter scripts.
+A portfolio of past projects, stored as plain files on disk, read by one central PHP library (`php/Portfolio.php`) and rendered by a handful of small exporter scripts.
 
 **Stay slim.** No framework, no composer dependencies, no build step, no database, no class hierarchies beyond the two classes described here. If a change adds indirection or tooling, it's probably the wrong change.
 
 ## Layout
 
 ```
-Portfolio.php           the central library — the only file that touches disk
-markdown.php            exporter: Markdown, grouped by year
-json.php                exporter: JSON, callable from the CLI or over HTTP
+php/                    all the code — the library and the exporters
+  Portfolio.php         the central library — the only file that touches disk
+  markdown.php          exporter: Markdown, grouped by year
+  json.php              exporter: JSON, callable from the CLI or over HTTP
 tests/Portfolio.php     tester for the library
 tests/markdown.php      tester for that exporter
 tests/json.php          tester for that exporter, CLI only
@@ -27,11 +28,11 @@ exports/                generated output
     _<project>/         parked — skipped by Portfolio::projects()
 ```
 
-One tester per script, named after it: `tests/Portfolio.php` covers the library, `tests/markdown.php` covers only that exporter's formatting. A new exporter gets its own tester and doesn't re-test the library.
+One tester per script, named after it: `tests/Portfolio.php` covers the library, `tests/markdown.php` covers only that exporter's formatting. A new exporter gets its own tester and doesn't re-test the library. `tests/` stays at the root, outside `php/`, and reaches the code through `ROOT . '/php/…'`.
 
-Exporter scripts live next to `Portfolio.php` and `require` it.
+Exporter scripts live in `php/`, next to `Portfolio.php`, and `require` it.
 
-The asset root is the `BASEDIR` constant at the top of `Portfolio.php` — an external archive volume, so a run finds nothing when that volume isn't mounted. `Portfolio::dir()` returns it, falling back to `./projects` when `BASEDIR` is empty. Read assets only through `Portfolio::dir()`; never hardcode the path in an exporter.
+The asset root is the `BASEDIR` constant at the top of `php/Portfolio.php` — an external archive volume, so a run finds nothing when that volume isn't mounted. `Portfolio::dir()` returns it, falling back to `projects/` in the repository root — one level up from the library — when `BASEDIR` is empty. Read assets only through `Portfolio::dir()`; never hardcode the path in an exporter.
 
 `BASEDIR` is defined with `defined() || define()`, so a script that defines it *before* requiring the library wins — that is how the testers point at fixtures instead of the archive. For the same reason, scripts `require_once` the library rather than `require` it.
 
@@ -98,8 +99,8 @@ Declare it on `Project` with a default and add a `.txt` of that name to the asse
 One script per output format, each a thin pass over `Portfolio::projects()`. `markdown.php` is the reference:
 
 ```sh
-php markdown.php > portfolio.md         # every project
-php markdown.php --rank=60 > short.md   # only projects ranked 60 or higher
+php php/markdown.php > portfolio.md         # every project
+php php/markdown.php --rank=60 > short.md   # only projects ranked 60 or higher
 ```
 
 Options are long-form and parsed with `getopt()`, listed in one `OPTIONS` const that also feeds the usage message. Each option that narrows the selection appends a predicate to a `$filters` array, and a project must pass all of them — so adding `--year` or `--type` is one `if` block, not a rewrite. An unparseable value exits 1 with usage on stderr.
@@ -107,8 +108,8 @@ Options are long-form and parsed with `getopt()`, listed in one `OPTIONS` const 
 `json.php` emits every property of every project and serves both callers:
 
 ```sh
-php json.php --rank=60 --type=website --offset=10 --limit=5
-GET json.php?rank=60&type=website&offset=10&limit=5
+php php/json.php --rank=60 --type=website --offset=10 --limit=5
+GET php/json.php?rank=60&type=website&offset=10&limit=5
 ```
 
 An exporter that answers to HTTP as well keeps the difference in three places and nowhere else: `parameters()` reads `getopt()` or `$_GET` (unknown query keys are dropped), `fail()` writes usage to stderr and exits 1 or replies `400` with a JSON error body, and the `Content-Type` header is sent only when not on the CLI. Everything after that is SAPI-agnostic. A value that arrives repeated or as an array (`--rank=1 --rank=2`, `?rank[]=1`) fails the same way a malformed one does, rather than being silently coerced.
@@ -129,7 +130,7 @@ Conventions worth keeping in new exporters:
 php tests/Portfolio.php && php tests/markdown.php && php tests/json.php
 ```
 
-Each prints one line per check and exits 1 if any failed, so they double as a commit check. `tests/json.php` covers only that exporter's CLI: the HTTP path differs solely in `parameters()`, `fail()` and the `Content-Type` header, and testing it would need a web server, which can't be assumed available. Run them after any change to `Portfolio.php` or an exporter — they are the reason the edge cases don't need rebuilding by hand.
+Each prints one line per check and exits 1 if any failed, so they double as a commit check. `tests/json.php` covers only that exporter's CLI: the HTTP path differs solely in `parameters()`, `fail()` and the `Content-Type` header, and testing it would need a web server, which can't be assumed available. Run them after any change to `php/Portfolio.php` or an exporter — they are the reason the edge cases don't need rebuilding by hand.
 
 `tests/common.php` is shared setup, not a tester: it defines `BASEDIR` as `tests/fixtures/` *before* requiring the library, sets `ROOT` (`__DIR__ . '/..'`) so testers run from any working directory, and provides `section()`, `check()` and `conclude()`. A tester is then just `require_once __DIR__ . '/common.php';` followed by assertions, ending in `conclude()`.
 
@@ -151,7 +152,7 @@ The fixtures sit in `tests/fixtures/2099/` and `tests/fixtures/_2098/`:
 
 To add a case, add a folder under `tests/fixtures/2099/` and an assertion in the relevant tester, then update the listing check in `tests/Portfolio.php` and the golden output in `tests/markdown.php` to match — both cover everything the fixture root contains.
 
-The exporter checks shell out to `php -r 'define("BASEDIR", …); require "markdown.php";' -- --rank=51`, so `getopt()` sees a real command line and the option path is genuinely exercised.
+The exporter checks shell out to `php -r 'define("BASEDIR", …); require "php/markdown.php";' -- --rank=51`, so `getopt()` sees a real command line and the option path is genuinely exercised.
 
 ## Note
 

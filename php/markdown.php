@@ -2,8 +2,8 @@
 /**
  * Exporter: the portfolio as Markdown, grouped by year.
  *
- *   php markdown.php > portfolio.md            every project
- *   php markdown.php --rank=60 > short.md      only projects ranked 60 or higher
+ *   php php/markdown.php > portfolio.md            every project
+ *   php php/markdown.php --rank=60 > short.md      only projects ranked 60 or higher
  */
 
 require_once __DIR__ . '/Portfolio.php';
@@ -18,7 +18,7 @@ function usage(): never
         OPTIONS
     ));
 
-    fwrite(STDERR, "usage: php markdown.php [--$usage]\n");
+    fwrite(STDERR, "usage: php php/markdown.php [--$usage]\n");
     exit(1);
 }
 

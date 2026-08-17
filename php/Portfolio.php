@@ -119,7 +119,7 @@ class Portfolio
     public static function dir(): string
     {
         if (BASEDIR) return BASEDIR;
-        return __DIR__ . '/projects';
+        return dirname(__DIR__) . '/projects';
     }
 
     /**

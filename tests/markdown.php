@@ -1,6 +1,6 @@
 <?php
 /**
- * Tester for markdown.php: the rendered document and the command line.
+ * Tester for php/markdown.php: the rendered document and the command line.
  *
  *   php tests/markdown.php
  *
@@ -13,7 +13,7 @@ require_once __DIR__ . '/common.php';
 section('Document');
 
 ob_start();
-require ROOT . '/markdown.php';
+require ROOT . '/php/markdown.php';
 $markdown = ob_get_clean();
 
 // The whole document, since the fixture root holds only fixtures. Every project
@@ -55,7 +55,7 @@ MARKDOWN . "\n");
 section('Command line');
 
 /**
- * Run markdown.php as its own process, against the fixtures, so its option
+ * Run php/markdown.php as its own process, against the fixtures, so its option
  * parsing is exercised for real: getopt() reads the actual command line.
  */
 function markdown(string $arguments): array
@@ -63,7 +63,7 @@ function markdown(string $arguments): array
     $code = sprintf(
         'define("BASEDIR", %s); require %s;',
         var_export(BASEDIR, true),
-        var_export(ROOT . '/markdown.php', true)
+        var_export(ROOT . '/php/markdown.php', true)
     );
 
     $lines = [];

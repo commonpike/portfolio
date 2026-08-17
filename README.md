@@ -7,17 +7,17 @@ No framework, no dependencies, no build step, no database. PHP 8.1 or newer.
 ## Quick start
 
 ```sh
-php markdown.php > exports/portfolio.md    # every project
-php markdown.php --rank=60                 # only projects ranked 60 or higher
+php php/markdown.php > exports/portfolio.md    # every project
+php php/markdown.php --rank=60                 # only projects ranked 60 or higher
 
-php json.php --type=website --limit=10     # every property, as JSON
+php php/json.php --type=website --limit=10     # every property, as JSON
 ```
 
-`json.php` also answers over HTTP, reading the same parameters from the query string: `json.php?rank=60&type=website&offset=10&limit=5`.
+`php/json.php` also answers over HTTP, reading the same parameters from the query string: `json.php?rank=60&type=website&offset=10&limit=5`.
 
 ## Where the assets live
 
-The asset root is the `BASEDIR` constant at the top of `Portfolio.php`, currently an external archive volume — so nothing is found when that volume isn't mounted. With `BASEDIR` empty it falls back to `./projects`.
+The asset root is the `BASEDIR` constant at the top of `php/Portfolio.php`, currently an external archive volume — so nothing is found when that volume isn't mounted. With `BASEDIR` empty it falls back to `./projects` in the repository root.
 
 Assets are deliberately not in this repository; only the code is.
 
@@ -40,7 +40,7 @@ Create `<year>/<slug>/` under the asset root and drop files in it:
 
 Four text files are parsed rather than taken literally: `rank.txt` is a number (default 50, higher sorts first), `link.txt` gains `https://` when it has no scheme, and `roles.txt` and `technologies.txt` are split on slashes, commas and newlines.
 
-Nothing needs registering — the library reads whatever is there. The `Project` class in `Portfolio.php` is the definitive list of recognised filenames.
+Nothing needs registering — the library reads whatever is there. The `Project` class in `php/Portfolio.php` is the definitive list of recognised filenames.
 
 Prefix a year or project folder with `_` to park it — `_2026/`, `2012/_draft/` — and it stays out of every listing while remaining readable if asked for by name. Folders with nothing readable in them are skipped too.
 
@@ -48,9 +48,9 @@ Prefix a year or project folder with `_` to park it — `_2026/`, `2012/_draft/`
 
 | file | |
 |---|---|
-| `Portfolio.php` | the library: reads the assets, returns `Project` objects. The only file that touches disk |
-| `markdown.php` | exporter: Markdown, grouped by year |
-| `json.php` | exporter: JSON, from the command line or over HTTP |
+| `php/Portfolio.php` | the library: reads the assets, returns `Project` objects. The only file that touches disk |
+| `php/markdown.php` | exporter: Markdown, grouped by year |
+| `php/json.php` | exporter: JSON, from the command line or over HTTP |
 | `tests/` | one tester per script, plus the fixtures they run against |
 | `projects/` | local asset root; contents ignored by git |
 | `exports/` | generated output; ignored by git |
@@ -65,7 +65,7 @@ foreach (Portfolio::projects(fn(Project $p) => $p->year >= 2010) as $project) {
 }
 ```
 
-A new export format is a new script next to `markdown.php` that loops over that list and prints. Formatting only — discovery and parsing belong in the library, so every exporter sees identical data.
+A new export format is a new script in `php/`, next to `markdown.php`, that loops over that list and prints. Formatting only — discovery and parsing belong in the library, so every exporter sees identical data.
 
 ## Tests
 

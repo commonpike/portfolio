@@ -10,7 +10,7 @@
 const ROOT = __DIR__ . '/..';
 
 define('BASEDIR', __DIR__ . '/fixtures');
-require_once ROOT . '/Portfolio.php';
+require_once ROOT . '/php/Portfolio.php';
 
 $failures = 0;
 

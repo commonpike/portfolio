@@ -1,6 +1,6 @@
 <?php
 /**
- * Tester for json.php: the serialised document and the command line.
+ * Tester for php/json.php: the serialised document and the command line.
  *
  *   php tests/json.php
  *
@@ -14,7 +14,7 @@
 require_once __DIR__ . '/common.php';
 
 /**
- * Run json.php as its own process, against the fixtures, so its option parsing
+ * Run php/json.php as its own process, against the fixtures, so its option parsing
  * is exercised for real: getopt() reads the actual command line.
  */
 function json(string $arguments, string $stream = '2>/dev/null'): array
@@ -22,7 +22,7 @@ function json(string $arguments, string $stream = '2>/dev/null'): array
     $code = sprintf(
         'define("BASEDIR", %s); require %s;',
         var_export(BASEDIR, true),
-        var_export(ROOT . '/json.php', true)
+        var_export(ROOT . '/php/json.php', true)
     );
 
     $lines = [];
@@ -102,7 +102,7 @@ check('nothing is printed on stdout when refused', json('--rank=x')['output'], '
 check(
     'the reason and the usage go to stderr',
     json('--rank=x', '2>&1 1>/dev/null')['output'],
-    "rank must be a whole number\nusage: php json.php [--rank=<value>] [--type=<value>] [--offset=<value>] [--limit=<value>]"
+    "rank must be a whole number\nusage: php php/json.php [--rank=<value>] [--type=<value>] [--offset=<value>] [--limit=<value>]"
 );
 check('an unknown option is ignored', slugs('--bogus=1 --limit=1'), ['full']);
 
