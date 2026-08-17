@@ -16,7 +16,7 @@ php php/json.php --refresh                     # re-read the archive first
 php php/markdown.php --basedir=/mnt/other      # read a different asset root
 ```
 
-`php/json.php` also answers over HTTP, reading the same parameters from the query string: `json.php?rank=60&type=website&offset=10&limit=5`. An empty parameter is the same as leaving it out, so `?type=` means any type. `basedir` and `refresh` are the exceptions — they are accepted on the command line only, never from a query string.
+`php/json.php` also answers over HTTP, reading the same parameters from the query string: `json.php?rank=60&type=website&offset=10&limit=5`. It sends `Access-Control-Allow-Origin: *`, so a front end on another origin — such as the one in `web/` — can read it. An empty parameter is the same as leaving it out, so `?type=` means any type. `basedir` and `refresh` are the exceptions — they are accepted on the command line only, never from a query string.
 
 It keeps a copy of the full listing in `php/cache/`, re-reading the archive when that copy is more than ten minutes old, so a page of results doesn't cost a walk over the whole volume. `--refresh` rebuilds it now; deleting the folder is just as good.
 

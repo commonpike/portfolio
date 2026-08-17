@@ -35,6 +35,13 @@ const CLI_ONLY = ['basedir', 'refresh'];
 const CACHE_DIR = __DIR__ . '/cache';
 const CACHE_TTL = 600;
 
+/**
+ * Who may read this from a browser. The listing is public and read-only, and a
+ * front end is served from another origin while it is being developed, so any
+ * origin may. Only plain GETs are answered — nothing here needs a preflight.
+ */
+const ALLOW_ORIGIN = '*';
+
 /** Called from the command line rather than over HTTP? */
 function cli(): bool
 {
@@ -71,9 +78,16 @@ function fail(string $message): never
     }
 
     http_response_code(400);
-    header('Content-Type: application/json; charset=utf-8');
+    headers();
     echo json_encode(['error' => $message]), "\n";
     exit(1);
+}
+
+/** The headers every HTTP reply needs: what it is, and who may read it. */
+function headers(): void
+{
+    header('Content-Type: application/json; charset=utf-8');
+    header('Access-Control-Allow-Origin: ' . ALLOW_ORIGIN);
 }
 
 /** A whole number, or nothing: a repeated or malformed parameter is refused. */
@@ -191,7 +205,7 @@ $projects = array_values(array_filter(
 ));
 
 if (!cli()) {
-    header('Content-Type: application/json; charset=utf-8');
+    headers();
 }
 
 echo json_encode(
