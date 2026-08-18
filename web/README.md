@@ -121,7 +121,8 @@ does that on its own.
 
 The listing fetches everything once and narrows it in the browser: Type comes from
 the types the projects actually declare, Show is a threshold on `rank`, Limit and
-the pager slice what is left. Grid and detail are the same markup under different
+the pager slice what is left. Picking a type sets Show to `all`, since the two
+filters multiply and a type with nothing highly ranked would come back empty. Grid and detail are the same markup under different
 CSS, so switching neither refetches nor collapses an unfolded description.
 
 ## Theme

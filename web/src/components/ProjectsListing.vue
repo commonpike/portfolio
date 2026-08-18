@@ -88,6 +88,17 @@ const years = computed(() => {
   return groups
 })
 
+/**
+ * Picking a type widens "Show" to its last level, 'all'. The two filters
+ * multiply, and a type that holds nothing ranked above the current threshold
+ * would otherwise answer with an empty listing.
+ */
+watch(type, (value) => {
+  if (value !== 'all') {
+    level.value = LEVELS.at(-1)!.value
+  }
+})
+
 // Narrowing the list can strand you past its end; go back to the first page.
 watch([type, level, limit], () => {
   page.value = 0

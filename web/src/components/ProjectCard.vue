@@ -32,18 +32,22 @@ const folded = computed(() => {
 })
 
 /**
- * "icw:" — who else worked on it: design, programming, production and content
- * flattened into one list, with pike himself and any repeat of a name dropped.
+ * Who the project was for and who produced it, on the line under the title:
+ * "owner / production", or whichever of the two the assets name. Production is
+ * credited here rather than in the icw line below.
+ */
+const attribution = computed(() =>
+  [props.project.owner, props.project.production].filter((field) => field !== '').join(' / '),
+)
+
+/**
+ * "icw:" — who else worked on it: design, programming and content flattened into
+ * one list, with pike himself and any repeat of a name dropped.
  */
 const icw = computed(() => {
   const seen = new Set<string>()
 
-  return [
-    props.project.design,
-    props.project.programming,
-    props.project.production,
-    props.project.content,
-  ]
+  return [props.project.design, props.project.programming, props.project.content]
     .flatMap((field) => field.split(','))
     .map((name) => name.trim())
     .filter((name) => name !== '' && !UNCREDITED.includes(name.toLowerCase()))
@@ -88,7 +92,7 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
           >{{ linkLabel }}</a
         >
 
-        <p v-if="project.owner !== ''" class="owner muted">{{ project.owner }}</p>
+        <p v-if="attribution !== ''" class="attribution muted">{{ attribution }}</p>
 
         <p v-if="project.description !== ''" class="description">
           {{ expanded || !foldable ? project.description : folded
@@ -145,7 +149,7 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
 }
 
 .link,
-.owner {
+.attribution {
   display: block;
   font-size: 0.8125rem;
 }
@@ -160,7 +164,7 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
   text-decoration: underline;
 }
 
-.owner {
+.attribution {
   margin: 0.2rem 0 0;
 }
 

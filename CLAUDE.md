@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Intent
 
-A portfolio of past projects, stored as plain files on disk, read by one central PHP library (`php/Portfolio.php`) and rendered by a handful of small exporter scripts.
+A portfolio of past projects, stored as plain files on disk, read by one central PHP library (`php/Portfolio.php`) and rendered by a handful of small exporter scripts. One script goes the other way: `php/import.php` writes asset folders from a CSV.
 
 **Stay slim.** No framework, no composer dependencies, no build step, no database, no class hierarchies beyond the two classes described here. If a change adds indirection or tooling, it's probably the wrong change.
 
@@ -13,14 +13,16 @@ That rule is about the PHP. `web/` holds a TypeScript/Vue single-page app under 
 ## Layout
 
 ```
-php/                    all the code — the library and the exporters
+php/                    all the code — the library, the exporters, the importer
   Portfolio.php         the central library — the only file that reads the assets
   markdown.php          exporter: Markdown, grouped by year
   json.php              exporter: JSON, callable from the CLI or over HTTP
+  import.php            importer: a CSV of projects into asset folders
   cache/                json.php's cached listings, one per asset root
 tests/Portfolio.php     tester for the library
 tests/markdown.php      tester for that exporter
 tests/json.php          tester for that exporter, CLI only
+tests/import.php        tester for the importer
 tests/common.php        shared setup and helpers — not a tester
 tests/fixtures/         an asset root of its own, used only by the testers
 projects/               the fallback asset root
@@ -34,7 +36,7 @@ web/                    the Vue SPA — its own conventions, see web/README.md
 
 One tester per script, named after it: `tests/Portfolio.php` covers the library, `tests/markdown.php` covers only that exporter's formatting. A new exporter gets its own tester and doesn't re-test the library. `tests/` stays at the root, outside `php/`, and reaches the code through `ROOT . '/php/…'`.
 
-Exporter scripts live in `php/`, next to `Portfolio.php`, and `require` it.
+Exporter and importer scripts live in `php/`, next to `Portfolio.php`, and `require` it.
 
 The asset root is the `BASEDIR` constant at the top of `php/Portfolio.php` — an external archive volume, so a run finds nothing when that volume isn't mounted. `Portfolio::dir()` returns it, falling back to `projects/` in the repository root — one level up from the library — when `BASEDIR` is empty. Read assets only through `Portfolio::dir()`; never hardcode the path in an exporter.
 
@@ -45,6 +47,8 @@ The asset collection is still being edited, so don't treat any particular folder
 ## Architecture
 
 `Portfolio` (static methods) does all discovery and parsing; `Project` is a plain data object. Exporters hold formatting only — no globbing, no reading of assets, so every exporter sees identical data. The one thing an exporter may touch on disk is its own cache under `php/cache/`, as `json.php` does; that is a copy of what the library already returned, never a second way of reading the assets.
+
+`import.php` is the only script that writes assets, and it writes nothing else: it never reads them back, so the library stays the one way in. It gets the root the same way everything else does, from `Portfolio::dir()`.
 
 ```php
 require 'Portfolio.php';
@@ -141,13 +145,36 @@ Conventions worth keeping in new exporters:
 - Build output from small helpers (`bullet()`, `quote()`, `blocks()` in `markdown.php`) instead of interleaving `echo` with conditionals.
 - Prefix `images`/`files`/`preview` paths with whatever base URL or directory the format needs; the library stores them relative to the asset root.
 
+## The importer
+
+`import.php` fills an asset root from a CSV — the collection is maintained as a spreadsheet, and this is how a revision of it reaches disk:
+
+```sh
+php php/import.php --basedir=projects            # into the local asset root
+php php/import.php --basedir=projects --dry-run  # report without writing
+php php/import.php --basedir=projects --force    # overwrite existing folders
+php php/import.php --csv=exports/other.csv       # read another listing
+```
+
+It shares the exporters' option conventions — one `OPTIONS` const feeding the usage message, `--basedir` settled above the `require`, a bad value exiting 1 with usage on stderr — and defaults `--csv` to `exports/portfolio.csv`.
+
+One row becomes `<year>/<slug>/`, one column becomes one `<property>.txt` in it. The mapping is the *header*, not a list in the code: only `yyyy` and `slug` are held back, because they name the folders, so a column added to the spreadsheet needs no change here and lands in `Project::$other` until the property is declared. Column names are normalised the way `Portfolio::name()` reads them back, so `annual report` and `annual_report.txt` are the same property. Values are trimmed and written without a trailing newline, matching the assets already on disk; an empty column writes no file at all, leaving the declared default rather than an empty asset.
+
+A row is refused, reported on stderr and skipped — with the run exiting 1 — when its year isn't four digits, its slug wouldn't survive the round trip through a folder name, or its folder already exists without `--force`. Refusing rather than coercing is the point: a slug the library would read back differently is a silent rename.
+
+`--force` makes a folder *match* its row: the columns' own `.txt` files are rewritten, and one whose column is now empty is removed, so emptying a cell empties the property. Nothing else in the folder is touched — images, and text assets the CSV has no column for, stay. That is what makes a re-import after a spreadsheet edit safe.
+
+Two things worth knowing when a row seems to vanish after an import. A folder whose only asset is a `title.txt` holding exactly the ucfirst'ed slug is indistinguishable from an empty one, so `Portfolio::projects()` skips it — a row needs one value the defaults don't already supply. And an underscored slug is written as it stands, which parks it in place; that is deliberate, not an import failure.
+
 ## Testing
 
 ```sh
-php tests/Portfolio.php && php tests/markdown.php && php tests/json.php
+php tests/Portfolio.php && php tests/markdown.php && php tests/json.php && php tests/import.php
 ```
 
 Each prints one line per check and exits 1 if any failed, so they double as a commit check. `tests/json.php` covers only that exporter's CLI: the HTTP path differs solely in `parameters()`, `fail()` and the `Content-Type` header, and testing it would need a web server, which can't be assumed available. Run them after any change to `php/Portfolio.php` or an exporter — they are the reason the edge cases don't need rebuilding by hand.
+
+`tests/import.php` is the one tester that writes: it builds both its CSV and its target root under `sys_get_temp_dir()`, so it stays off `tests/fixtures/` — an asset root the other testers assert over *in full*, which an import would break — and clears both afterwards. Its one end-to-end check reads the result back through `php/json.php` with `--refresh`, since that exporter caches per asset root and the temporary root keeps its name between runs; the cache file is unlinked at the end, the same way `tests/json.php` leaves none behind.
 
 `tests/common.php` is shared setup, not a tester: it defines `BASEDIR` as `tests/fixtures/` *before* requiring the library, sets `ROOT` (`__DIR__ . '/..'`) so testers run from any working directory, and provides `section()`, `check()` and `conclude()`. A tester is then just `require_once __DIR__ . '/common.php';` followed by assertions, ending in `conclude()`.
 
