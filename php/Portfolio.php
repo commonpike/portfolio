@@ -138,7 +138,7 @@ class Portfolio
     public static function projects(?callable $filter = null): array
     {
         $projects = [];
-
+        set_time_limit(300);
         foreach (self::dirs(self::dir()) as $year) {
             if (!preg_match('/^\d{4}$/', $year)) {
                 continue;

@@ -34,8 +34,8 @@ const level = ref(LEVELS[1]!.value)
 const limit = ref<number | 'all'>(10)
 const page = ref(0)
 
-/** How a project is drawn: 'grid' as a thumbnail, 'list' in detail. */
-const view = ref<'grid' | 'list'>('grid')
+/** How a project is drawn: 'grid' as a thumbnail, 'list' in detail. Detail first. */
+const view = ref<'grid' | 'list'>('list')
 
 function toggleView(): void {
   view.value = view.value === 'grid' ? 'list' : 'grid'
@@ -248,8 +248,14 @@ watch(pageCount, (count) => {
   color: var(--p-red-500, #ef4444);
 }
 
+/* Years are divided too, by a rule a step stronger than the one between projects
+   — mixed up from the text colour rather than widened, so it reads as the same
+   kind of line. It sits on the year wrapper, so both views get it. */
 .year + .year {
-  margin-top: clamp(2.5rem, 6vh, 4rem);
+  --year-space: clamp(1.75rem, 4vh, 2.75rem);
+  margin-top: var(--year-space);
+  border-top: 1px solid color-mix(in srgb, var(--p-text-color) 25%, var(--p-content-border-color));
+  padding-top: var(--year-space);
 }
 
 .year-heading {
@@ -266,9 +272,21 @@ watch(pageCount, (count) => {
   gap: 2rem 1.5rem;
 }
 
+/* Detail view sets its projects apart with a thin rule between them, with equal
+   air either side — one value tunes both. The grid needs none: its thumbnails
+   already read as separate things. */
 .projects.list {
+  --rule-space: clamp(1.25rem, 3vh, 2rem);
   display: flex;
   flex-direction: column;
-  gap: clamp(1.75rem, 4vh, 2.75rem);
+  gap: var(--rule-space);
+}
+
+/* The child's root element carries this scope too, so no class of its own is
+   needed here. Only *between* projects: no rule above the first or below the
+   last, where the year headings already do the dividing. */
+.projects.list > * + * {
+  border-top: 1px solid var(--p-content-border-color);
+  padding-top: var(--rule-space);
 }
 </style>

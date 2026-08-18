@@ -11,7 +11,7 @@ import type { ReadonlyProject } from '@/composables/useProjects'
 const props = defineProps<{ project: ReadonlyProject; view: 'grid' | 'list' }>()
 
 /** Where a folded description is cut. */
-const CAP = 64
+const CAP = 256
 
 /** Credits not worth naming: the portfolio is his. */
 const UNCREDITED = ['pike']
@@ -20,6 +20,9 @@ const expanded = ref(false)
 const missing = ref(false)
 
 const preview = computed(() => assetUrl(props.project.preview))
+
+/** Whether there is a picture to show: one is named, and it loaded. */
+const shown = computed(() => preview.value !== '' && !missing.value)
 
 const foldable = computed(() => props.project.description.length > CAP)
 
@@ -68,9 +71,9 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
 
 <template>
   <article class="card" :class="view">
-    <div class="thumb">
+    <div class="thumb" :class="{ empty: !shown }">
       <img
-        v-if="preview !== '' && !missing"
+        v-if="shown"
         :src="preview"
         :alt="project.title"
         loading="lazy"
@@ -105,15 +108,21 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
       </div>
 
       <footer class="foot">
-        <span v-if="project.type !== ''" class="pill type">{{ project.type }}</span>
+        <p v-if="icw.length > 0" class="icw muted">icw: {{ icw.join(', ') }}</p>
 
-        <span v-for="technology in project.technologies" :key="technology" class="pill">
-          {{ technology }}
-        </span>
+        <div class="pills">
+          <span v-if="project.type !== ''" class="pill type">{{ project.type }}</span>
 
-        <span v-for="role in project.roles" :key="role" class="pill role">{{ role }}</span>
+          <span
+            v-for="technology in project.technologies"
+            :key="technology"
+            class="pill technology"
+          >
+            {{ technology }}
+          </span>
 
-        <span v-if="icw.length > 0" class="icw muted">icw: {{ icw.join(', ') }}</span>
+          <span v-for="role in project.roles" :key="role" class="pill role">{{ role }}</span>
+        </div>
       </footer>
     </div>
   </article>
@@ -127,6 +136,13 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
   align-items: flex-start;
   aspect-ratio: 4 / 3;
   overflow: hidden;
+}
+
+/* No picture, or one that would not load: outline the box it would have filled,
+   so the placeholder reads as an empty frame rather than a gap in the card. */
+.thumb.empty {
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius, 0.75rem);
 }
 
 .thumb img {
@@ -173,7 +189,10 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
   max-width: 62ch;
 }
 
+/* The template puts no whitespace between the description and this button, so
+   that a cut sentence is not followed by a stray space; the gap is here. */
 .fold {
+  margin-left: 0.4rem;
   padding: 0;
   border: none;
   background: none;
@@ -186,28 +205,41 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
   text-decoration: underline;
 }
 
+/* The credits read above the pills, as a line of their own. */
 .foot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.icw {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.pills {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-top: 1rem;
 }
 
+/* Shape and type only: what a pill *is* comes from its fill below. */
 .pill {
   padding: 0.15em 0.6em;
   border: 1px solid var(--p-content-border-color);
   border-radius: 999px;
-  background: var(--p-surface-100);
   font-size: 0.75rem;
   line-height: 1.5;
   white-space: nowrap;
 }
 
-:global(.app-dark) .pill {
-  background: var(--p-surface-800);
-}
-
+/* The three kinds are told apart by that fill: the type carries the accent, a
+   technology a neutral wash of the text colour, a role nothing but the border.
+   Both mixes are against tokens that flip with the theme, so unlike the surface
+   shade this replaces, neither needs a dark variant. */
 .pill.type {
   border-color: transparent;
   background: color-mix(in srgb, var(--p-primary-color) 18%, transparent);
@@ -215,14 +247,14 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
   font-weight: 500;
 }
 
+.pill.technology {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--p-text-color) 12%, transparent);
+}
+
 .pill.role {
   background: none;
   color: var(--p-text-muted-color);
-}
-
-.icw {
-  font-size: 0.75rem;
-  margin-left: 0.35rem;
 }
 
 /* Thumbnail view: the picture, then just enough to name it. */
