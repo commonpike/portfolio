@@ -35,6 +35,9 @@ const CLI_ONLY = ['basedir', 'refresh'];
 const CACHE_DIR = __DIR__ . '/cache';
 const CACHE_TTL = 600;
 
+/** How long a cold scan may take when this is answered over HTTP; see listing(). */
+const SCAN_SECONDS = 300;
+
 /**
  * Who may read this from a browser. The listing is public and read-only, and a
  * front end is served from another origin while it is being developed, so any
@@ -119,6 +122,14 @@ function listing(bool $refresh): array
         if (is_array($cached) && array_is_list($cached)) {
             return $cached;
         }
+    }
+
+    // Nothing was cached, so the whole asset root is about to be read — which
+    // outlives a web server's max_execution_time when that root is a slow mount.
+    // Only over HTTP: the command line runs with no limit to lift, and capping it
+    // there would only cut an export short.
+    if (!cli()) {
+        set_time_limit(SCAN_SECONDS);
     }
 
     // Plain arrays rather than Project objects, so the cache holds exactly what
