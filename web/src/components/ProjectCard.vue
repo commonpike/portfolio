@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import ProjectGallery from '@/components/ProjectGallery.vue'
 import { assetUrl } from '@/config'
 import type { ReadonlyProject } from '@/composables/useProjects'
 
 /**
- * One project. The markup is the same in both views — grid hides what it does not
- * show and stacks what it does, list puts the thumbnail beside the text — so
- * switching costs nothing and an unfolded description stays unfolded.
+ * One project. The markup is the same in all three views — grid hides what it
+ * does not show and stacks what it does, list puts the thumbnail beside the text,
+ * full is list with the picture given most of the width — so switching costs
+ * nothing and an unfolded description stays unfolded.
  */
-const props = defineProps<{ project: ReadonlyProject; view: 'grid' | 'list' }>()
+const props = defineProps<{ project: ReadonlyProject; view: 'grid' | 'list' | 'full' }>()
+
+/** Asked to be opened in the popup. What that means is the listing's business. */
+const emit = defineEmits<{ open: [] }>()
 
 /** Where a folded description is cut. */
 const CAP = 256
@@ -23,6 +28,13 @@ const preview = computed(() => assetUrl(props.project.preview))
 
 /** Whether there is a picture to show: one is named, and it loaded. */
 const shown = computed(() => preview.value !== '' && !missing.value)
+
+/**
+ * In the popup the pictures are paged through rather than shown one at a time, so
+ * the gallery takes the thumbnail's place — and with it the loading and the empty
+ * frame, which is why neither `shown` nor `.empty` applies then.
+ */
+const gallery = computed(() => props.view === 'full' && props.project.images.length > 0)
 
 const foldable = computed(() => props.project.description.length > CAP)
 
@@ -67,24 +79,80 @@ const icw = computed(() => {
 
 /** The link as something to read, rather than as a URL. */
 const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').replace(/\/$/, ''))
+
+/**
+ * What opens the popup: the whole card in the grid, where there is little else to
+ * click, but only the thumbnail and the title in detail view, where the text is
+ * long enough to want selecting and the link is worth clicking on its own. The
+ * full view is the popup, so nothing in it opens anything.
+ */
+const wholeCardOpens = computed(() => props.view === 'grid')
+const partsOpen = computed(() => props.view === 'list')
+
+/**
+ * What makes an element open the popup: a button in all but name, so that a
+ * keyboard reaches it too. Spread onto whichever elements the view makes
+ * clickable, together with the two handlers below.
+ */
+const opener = { role: 'button', tabindex: 0 }
+
+function open(): void {
+  emit('open')
+}
+
+/** Enter and Space, the keys a real button would answer to. */
+function openOnKey(event: KeyboardEvent): void {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    emit('open')
+  }
+}
 </script>
 
 <template>
-  <article class="card" :class="view">
-    <div class="thumb" :class="{ empty: !shown }">
+  <article
+    class="card"
+    :class="[view, { opens: wholeCardOpens }]"
+    v-bind="wholeCardOpens ? { ...opener, 'aria-label': `Open ${project.title}` } : {}"
+    @click="wholeCardOpens && open()"
+    @keydown="wholeCardOpens && openOnKey($event)"
+  >
+    <div
+      class="thumb"
+      :class="{ empty: !gallery && !shown, opens: partsOpen }"
+      v-bind="partsOpen ? { ...opener, 'aria-label': `Open ${project.title}` } : {}"
+      @click="partsOpen && open()"
+      @keydown="partsOpen && openOnKey($event)"
+    >
+      <ProjectGallery
+        v-if="gallery"
+        :images="project.images"
+        :start="project.preview"
+        :alt="project.title"
+      />
+
       <img
-        v-if="shown"
+        v-else-if="shown"
         :src="preview"
         :alt="project.title"
         loading="lazy"
         @error="missing = true"
       />
+
       <i v-else class="pi pi-image placeholder" aria-hidden="true" />
     </div>
 
     <div class="content">
       <div class="upper">
-        <h3 class="title">{{ project.title }}</h3>
+        <h3
+          class="title"
+          :class="{ opens: partsOpen }"
+          v-bind="partsOpen ? opener : {}"
+          @click="partsOpen && open()"
+          @keydown="partsOpen && openOnKey($event)"
+        >
+          {{ project.title }}
+        </h3>
 
         <a
           v-if="project.link !== ''"
@@ -92,6 +160,7 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
           :href="project.link"
           target="_blank"
           rel="noopener noreferrer"
+          @click.stop
           >{{ linkLabel }}</a
         >
 
@@ -129,12 +198,27 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
 </template>
 
 <style scoped>
-/* The thumbnail sits in a 4:3 box whatever shape it is; only its alignment
-   differs between the views. */
+/* Whatever opens the popup says so, and shows a focus ring: these are buttons in
+   all but name, and the view decides which elements wear the class. */
+.opens {
+  cursor: pointer;
+}
+
+.opens:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.title.opens:hover {
+  color: var(--p-primary-color);
+}
+
+/* Where the 4:3 box comes from differs per view, below: the grid wants every
+   thumbnail the same shape, detail wants the picture's own. */
 .thumb {
   display: flex;
   align-items: flex-start;
-  aspect-ratio: 4 / 3;
   overflow: hidden;
 }
 
@@ -257,11 +341,16 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
   color: var(--p-text-muted-color);
 }
 
-/* Thumbnail view: the picture, then just enough to name it. */
+/* Thumbnail view: the picture, then just enough to name it. Every thumbnail is
+   the same 4:3 box whatever shape its picture is, or the grid would not line up. */
 .card.grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.card.grid .thumb {
+  aspect-ratio: 4 / 3;
 }
 
 .card.grid .thumb img {
@@ -273,26 +362,53 @@ const linkLabel = computed(() => props.project.link.replace(/^https?:\/\//, '').
   display: none;
 }
 
-/* Detail view: picture on the left, text on the right, footer at its foot. */
+/* Detail view: picture on the left, text on the right, footer at its foot. Popup
+   view is the same arrangement with the picture given two thirds of the box —
+   room for the gallery it is going to become. */
 .card.list {
   display: grid;
   grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
   gap: 1.75rem;
 }
 
-.card.list .thumb img {
+.card.full {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 1.75rem;
+}
+
+/* In both, the picture keeps its own proportions and sets the height itself, so
+   the text beside it starts level with the top of the image instead of with a 4:3
+   box a tall or wide picture only partly fills. */
+.card.list .thumb img,
+.card.full .thumb img {
+  height: auto;
   object-position: top left;
 }
 
-.card.list .content {
+/* With no picture there is nothing to set that height, so the empty frame falls
+   back to the box it would have been. */
+.card.list .thumb.empty,
+.card.full .thumb.empty {
+  aspect-ratio: 4 / 3;
+}
+
+.card.list .content,
+.card.full .content {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 1rem;
 }
 
+/* The popup's own header names the project, so the card does not repeat it. */
+.card.full .title {
+  display: none;
+}
+
 @media (max-width: 48rem) {
-  .card.list {
+  .card.list,
+  .card.full {
     grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
   }

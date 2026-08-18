@@ -129,6 +129,35 @@ so switching neither refetches nor collapses an unfolded description — grid si
 hides the description and the footer. A description longer than 256 characters is
 cut back to its last whole word, with a `more..` button after it.
 
+A project opens in a popup: anywhere on the card in grid view, where there is
+little else to click, but only the thumbnail or the title in detail view, where the
+text is long enough to want selecting and the link is worth clicking on its own.
+The popup is a third view of the same card — `full`, detail's two columns with the
+picture given two thirds of the width, which is the room the gallery it is to
+become will need. Its own header names the project, so the card hides its title
+there. `ProjectsListing` holds one `ProjectDialog` for the whole listing and the
+project it shows *is* the state: a card only emits `open`, and `null` is closed.
+Whatever opens it carries `role="button"` and answers Enter and Space, so the popup
+is reachable without a mouse.
+
+Inside the popup, `ProjectGallery` pages through `images` — every picture the
+project has, which is where `preview` came from in the first place, so it opens on
+the one the card was showing and goes on from there. Paging wraps at both ends, the
+controls only appear when there is more than one picture, and the arrow keys work
+without tabbing to them: the listener is on the window, which is safe because the
+gallery exists only while the popup is open. A picture that fails to load is
+remembered by index, so its neighbours still page normally.
+
+Its controls sit *over* the picture, so paging cannot shift the layout. The counter
+is the one that is always there: it says how many pictures there are, which is what
+invites paging at all, and clicking it pages forward. That is what lets the arrows
+be a mouse affordance — revealed by hovering the picture, hidden again on leaving,
+and under `hover: none` not rendered at all, so nothing invisible can be tapped by
+accident. Paging resizes the box rather than jumping: the shape of the picture is
+its `aspect-ratio`, which can be transitioned where a height of `auto` could not,
+and it is set on `load`, so the box holds the previous shape until the new
+picture's own is known.
+
 ## Theme
 
 PrimeVue's [Aura](https://primevue.org/theming/) preset supplies the colours as

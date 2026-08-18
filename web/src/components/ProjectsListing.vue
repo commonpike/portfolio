@@ -4,6 +4,7 @@ import Button from 'primevue/button'
 import ListingSelect from '@/components/ListingSelect.vue'
 import ListingPager from '@/components/ListingPager.vue'
 import ProjectCard from '@/components/ProjectCard.vue'
+import ProjectDialog from '@/components/ProjectDialog.vue'
 import { useProjects, type ReadonlyProject } from '@/composables/useProjects'
 
 const { projects, error, loading, load, reload } = useProjects()
@@ -36,6 +37,12 @@ const page = ref(0)
 
 /** How a project is drawn: 'grid' as a thumbnail, 'list' in detail. Detail first. */
 const view = ref<'grid' | 'list'>('list')
+
+/**
+ * The project the popup is showing, if any. One dialog serves the whole listing —
+ * the cards only say which project to open, they do not each carry a dialog.
+ */
+const opened = ref<ReadonlyProject | null>(null)
 
 function toggleView(): void {
   view.value = view.value === 'grid' ? 'list' : 'grid'
@@ -161,6 +168,7 @@ watch(pageCount, (count) => {
           :key="project.path"
           :project="project"
           :view="view"
+          @open="opened = project"
         />
       </div>
     </div>
@@ -169,6 +177,8 @@ watch(pageCount, (count) => {
       <ListingSelect v-model="limit" label="Limit" :options="LIMITS" />
       <ListingPager v-model="page" :page-count="pageCount" />
     </footer>
+
+    <ProjectDialog :project="opened" @close="opened = null" />
   </section>
 </template>
 
