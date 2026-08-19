@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="pike::portfolio">
+  <!-- The :: of the titles, as a mark: two colons, four dots. White on the accent
+       blue rather than blue on the page, because the icon has to hold up against
+       both a light and a dark browser chrome — and because white is what the
+       colons flicker to anyway. Geometry: dots 8 wide, 4 apart, 6 from the edge. -->
+  <rect width="32" height="32" rx="7" fill="#2563eb" />
+  <g fill="#fff">
+    <circle cx="10" cy="10" r="4" />
+    <circle cx="10" cy="22" r="4" />
+    <circle cx="22" cy="10" r="4" />
+    <circle cx="22" cy="22" r="4" />
+  </g>
+</svg>

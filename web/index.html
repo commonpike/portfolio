@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
+    <!-- The :: as a mark. The SVG is the source and what a current browser takes;
+         the .ico is drawn from it for the ones that will not, and holds 16, 32 and
+         48. Both paths are absolute, so the build writes VITE_BASE_URL in front. -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>pike::portfolio</title>
     <meta name="description" content="A portfolio of past projects." />
