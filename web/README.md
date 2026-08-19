@@ -6,7 +6,7 @@ and does its filtering, sorting and paging in the browser.
 
 ## Configuration
 
-Both settings live in `.env`, which is **not** in git. `.env.dist` is the tracked
+The settings live in `.env`, which is **not** in git. `.env.dist` is the tracked
 template, so start by copying it:
 
 ```sh
@@ -15,6 +15,7 @@ cp .env.dist .env
 
 | setting | what it is |
 |---|---|
+| `VITE_BASE_URL` | Where the site is hosted: `/` at the root of a domain, `/portfolio/` in a subdirectory. See below. |
 | `VITE_PORTFOLIO_JSON_URL` | The URL of the JSON exporter, `php/json.php`. The app fetches it once, unfiltered, and narrows the result client-side. |
 | `VITE_ASSET_BASE_URL` | The base URL for media. The exporter returns `images`, `files` and `preview` as paths relative to the asset root — `2012/wereldkiezer/preview.jpg` — and that root is an archive volume, not a web root, so this says where those files are actually served from. `assetUrl()` in `src/config.ts` joins the two. |
 | `VITE_PRIMEVUE_LICENSE_KEY` | PrimeVue's license key. Empty in `.env.dist` on purpose — fill it in `.env` only. |
@@ -27,13 +28,39 @@ the bundle, so the key is readable in the built JavaScript — that is how a
 browser-side license works, and it is why the key is kept out of git but cannot be
 kept out of the page.
 
-Both are read only in `src/config.ts`, and both are baked into the bundle by
-`vite build` — they are build-time settings, not runtime ones, so changing either
-means rebuilding. `.env.local` overrides `.env` if you want a machine-local
-variant; it is git-ignored too.
+All of them are baked into the bundle by `vite build` — they are build-time
+settings, not runtime ones, so changing one means rebuilding. `.env.local`
+overrides `.env` if you want a machine-local variant; it is git-ignored too.
+
+The app reads them in `src/config.ts` and nowhere else, with one exception:
+`VITE_BASE_URL` is consumed by `vite.config.ts` instead, which is the only place
+that can act on it. Nothing imports it — Vite hands it back to the bundle as
+`import.meta.env.BASE_URL`, which is what `src/router.ts` gives its history.
 
 A setting left empty is reported in the page rather than guessed at, so a fresh
 clone that forgot the copy above says so instead of fetching `undefined`.
+`VITE_BASE_URL` is exempt: empty means `/`, which is a real answer.
+
+### Hosting it in a subdirectory
+
+Vite writes absolute URLs, so a build with no base emits `/assets/index-*.js` and
+`/favicon.ico` — which 404 anywhere but a domain's root. `VITE_BASE_URL` is what
+prefixes them, and the same value becomes the router's base, so both halves of the
+site move together:
+
+```sh
+VITE_BASE_URL=/portfolio/ npm run build   # or set it in .env
+```
+
+Leading and trailing slash both. Two things it does not solve. The server still
+has to fall back to *that* directory's `index.html` for unknown paths under it, or
+a refresh of `/portfolio/cv` 404s. And `VITE_PORTFOLIO_JSON_URL` and
+`VITE_ASSET_BASE_URL` are absolute URLs of their own — the base has nothing to do
+with them, and pointing the app at the wrong host is a separate mistake to make.
+
+A relative base (`./`) would need no configuring, but it cannot work here: with
+history routing, `/portfolio/cv` would resolve `./assets/…` against `/portfolio/`
+on a first visit and against `/portfolio/cv/` after a refresh.
 
 ### Serving the two of them
 
@@ -96,6 +123,7 @@ src/
   composables/
     useProjects.ts        the listing: one shared fetch, loaded on demand
     useTheme.ts           light/dark, remembered in localStorage
+    useFlicker.ts         the colons' flicker, on one timer for the page
   views/
     PortfolioView.vue     pike::portfolio — intro and the listing
     CvView.vue            pike::cv
@@ -114,6 +142,14 @@ src/
 A page is one entry in `src/router.ts`: the title there is the whole of its
 identity — nav text, heading and `document.title` all read it, which is why
 `about::this` can differ from `pike::portfolio` in more than its last word.
+
+Every `::` in a title flickers: every 5 to 10 seconds one or more of them flashes
+for 90ms, white against the dark or near-black against the light — a jump in
+luminance either way, since in light mode white *is* the page. `useFlicker` keeps
+one timer for all of them, because the round is the event; four titles each on
+their own clock would flicker four times as often. It snaps on and fades out,
+which is what makes it read as a flicker, and under `prefers-reduced-motion` it
+does not run at all.
 
 Routing uses history mode, so a server that hosts the built site has to fall back
 to `index.html` for unknown paths, or a refresh of `/cv` will 404. `npm run dev`

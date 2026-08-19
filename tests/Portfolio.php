@@ -7,9 +7,9 @@
  *
  * The fixtures cover every parsed property, the credit fields, an unreadable
  * rank, an empty type, a scheme-less and a scheme'd link, unrecognised text
- * assets, images versus other files, both preview outcomes, and all three
- * reasons a folder is skipped. Add a case by adding a folder under
- * tests/fixtures/2099/ and an assertion here.
+ * assets, images versus other files, both preview outcomes, and every reason a
+ * folder is skipped. Add a case by adding a folder under tests/fixtures/2099/ and
+ * an assertion here.
  */
 
 require_once __DIR__ . '/common.php';
@@ -17,7 +17,7 @@ require_once __DIR__ . '/common.php';
 section('Selection');
 
 // The fixture root holds nothing but fixtures, so this is the whole listing:
-// _draft, empty and ignored-only are absent because they are skipped.
+// _draft, @eaDir, empty and ignored-only are absent because they are skipped.
 check(
     'listed, ranked high to low with slug as tie-break',
     array_map(fn(Project $project) => $project->slug, Portfolio::projects()),
@@ -32,6 +32,11 @@ check(
     'a specific project is readable even when skipped in listings',
     Portfolio::project('2099', '_draft')->description,
     'Parked work in progress.'
+);
+check(
+    'an @-prefixed folder holds a readable asset, so its absence above is the rule',
+    Portfolio::project('2099', '@eaDir')->description,
+    'A folder belonging to the volume, not to the collection.'
 );
 check(
     'a filter narrows the listing',

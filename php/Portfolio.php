@@ -8,7 +8,7 @@
  */
 
 // A script may define BASEDIR before requiring this file — see test.php.
-defined('BASEDIR') || define('BASEDIR','/Volumes/archive/public/pike/portfolio');
+defined('BASEDIR') || define('BASEDIR','/volume1/web/archive/public/pike/portfolio');
 
 /**
  * One project, built from the files in its folder.
@@ -120,6 +120,9 @@ class Portfolio
 {
     public const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg'];
 
+    /** Folder name prefixes dirs() passes over: parked, or not ours to read. */
+    private const SKIPPED_PREFIXES = ['_', '@'];
+
     /** Absolute path of the asset root. */
     public static function dir(): string
     {
@@ -209,12 +212,19 @@ class Portfolio
         return trim(preg_replace('/[^a-z0-9]+/', '_', $name), '_');
     }
 
-    /** Sorted subdirectory names; hidden and _underscored entries skipped. */
+    /**
+     * Sorted subdirectory names, minus the ones a listing has no business in:
+     * _underscored, parked in place, and @-prefixed — folders belonging to the
+     * volume rather than to the collection, like the @eaDir a Synology drops
+     * beside the assets. Hidden ones are already gone; entries() takes those from
+     * files as well, which is a rule about every entry rather than about folders.
+     */
     private static function dirs(string $path): array
     {
         return array_values(array_filter(
             self::entries($path),
-            fn($entry) => $entry[0] !== '_' && is_dir($path . '/' . $entry)
+            fn($entry) => !in_array($entry[0], self::SKIPPED_PREFIXES, true)
+                && is_dir($path . '/' . $entry)
         ));
     }
 

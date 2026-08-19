@@ -65,7 +65,9 @@ Sort order is year descending, then `rank` descending (higher rank first), then 
 
 `Portfolio::projects()` skips, before the callback ever runs:
 
-- **year or project folders starting with `_`** — `_2005/` or `2003/_draft/` are work in progress, parked in place. Hidden (dot-prefixed) entries go too, which is also what keeps `.DS_Store` out.
+- **year or project folders starting with `_`** — `_2005/` or `2003/_draft/` are work in progress, parked in place.
+- **folders starting with `@`** — `@eaDir` and the like belong to the volume rather than to the collection; the archive sits on a NAS that writes them beside the assets. Same rule as `_`, and both are about folders only: a `@notes.txt` still reads.
+- **hidden entries**, dot-prefixed — a rule about every entry rather than about folders, applied one level lower in `entries()`, which is also what keeps `.DS_Store` out of a project's `files`.
 - **projects that yielded nothing** — an empty folder, or one holding only files the library ignores. Detected in `projects()` by comparing the project against a freshly constructed one: if every property is still at its default, there was nothing to read.
 
 `Portfolio::project()` applies neither rule — asking for a specific project by year and slug always reads it, which is how you preview an underscored draft.
@@ -191,7 +193,7 @@ The fixtures sit in `tests/fixtures/2099/` and `tests/fixtures/_2098/`:
 | `2099/bad-rank` | a `rank.txt` that isn't numeric, and an empty `type.txt` |
 | `2099/no-preview` | `preview` falling back to the first image |
 | `2099/rank-low` | low rank for sort order, and a link that already has a scheme |
-| `2099/_draft`, `2099/empty`, `2099/ignored-only` | the three reasons a folder is skipped — underscored, empty, only ignored files |
+| `2099/_draft`, `2099/@eaDir`, `2099/empty`, `2099/ignored-only` | the four reasons a folder is skipped — underscored, `@`-prefixed, empty, only ignored files |
 | `_2098/hidden-year` | an underscored year |
 
 `2099/empty` and `2099/ignored-only` hold a `.gitkeep`, because git tracks no empty folders and both cases would otherwise vanish on clone. The library skips dot-prefixed entries, so the placeholder is invisible to it and the folders still read as having nothing in them.
