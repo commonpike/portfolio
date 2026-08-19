@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
 import Button from 'primevue/button'
 import ListingSelect from '@/components/ListingSelect.vue'
 import ListingPager from '@/components/ListingPager.vue'
@@ -43,6 +43,9 @@ const view = ref<'grid' | 'list'>('list')
  * the cards only say which project to open, they do not each carry a dialog.
  */
 const opened = ref<ReadonlyProject | null>(null)
+
+/** The listing's own top edge — what a change of page scrolls back to, below. */
+const root = useTemplateRef<HTMLElement>('root')
 
 function toggleView(): void {
   view.value = view.value === 'grid' ? 'list' : 'grid'
@@ -116,10 +119,27 @@ watch(pageCount, (count) => {
     page.value = count - 1
   }
 })
+
+/**
+ * A change of page brings the head of the listing back into view. The pager at the
+ * foot is what needs it — clicking 01 there leaves you at the bottom of a page you
+ * have not seen — but this watches the page rather than the click, so the top pager
+ * and a filter that resets the page do the same thing.
+ *
+ * The listing's top, not the document's: that puts the filters and the first
+ * project on screen, where scrolling to 0 would show the page heading instead.
+ * Smooth unless the reader asked for less motion, the way the gallery does it.
+ */
+watch(page, () => {
+  root.value?.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    block: 'start',
+  })
+})
 </script>
 
 <template>
-  <section class="listing">
+  <section ref="root" class="listing">
     <header class="bar">
       <div class="filters">
         <ListingSelect v-model="type" label="Type" :options="types" />
@@ -185,6 +205,9 @@ watch(pageCount, (count) => {
 <style scoped>
 .listing {
   padding-bottom: clamp(3rem, 10vh, 6rem);
+  /* Paging scrolls this edge to the top of the viewport, where the site header is
+     sticky and would cover the filter bar. Its own bar is 4rem, plus air. */
+  scroll-margin-top: 5rem;
 }
 
 .bar {

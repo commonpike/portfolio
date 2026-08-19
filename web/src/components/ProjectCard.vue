@@ -36,7 +36,12 @@ const shown = computed(() => preview.value !== '' && !missing.value)
  */
 const gallery = computed(() => props.view === 'full' && props.project.images.length > 0)
 
-const foldable = computed(() => props.project.description.length > CAP)
+/**
+ * Whether the description is shown cut. Never in the popup: that view exists to
+ * show the project in full, and it has the room, so there is nothing there for a
+ * `more..` to reveal.
+ */
+const foldable = computed(() => props.view !== 'full' && props.project.description.length > CAP)
 
 /** The first CAP characters, back to the last word so nothing breaks mid-word. */
 const folded = computed(() => {
