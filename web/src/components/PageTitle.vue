@@ -10,7 +10,7 @@ import { useFlicker } from '@/composables/useFlicker'
 const props = defineProps<{ title: string }>()
 
 /** Every title's colons take part in the page-wide flicker. */
-const lit = useFlicker()
+const out = useFlicker()
 
 const parts = computed(() => {
   const at = props.title.indexOf('::')
@@ -25,7 +25,7 @@ const parts = computed(() => {
 
 <!-- prettier-ignore -->
 <template>
-  <span class="title">{{ parts.before }}<span v-if="parts.colons" class="colons" :class="{ lit }">::</span>{{ parts.after }}</span>
+  <span class="title">{{ parts.before }}<span v-if="parts.colons" class="colons" :class="{ out }">::</span>{{ parts.after }}</span>
 </template>
 
 <style scoped>
@@ -35,20 +35,15 @@ const parts = computed(() => {
 
 .colons {
   color: var(--p-primary-color);
-  /* Only on the way back: the flash snaps on and fades out, which is what makes
-     it read as a flicker rather than as a colour that changed. */
+  /* Only on the way back: the colon drops out at once and fades in again, which
+     is what makes it read as a flicker rather than as a colour that changed. */
   transition: color 0.3s ease;
 }
 
-.colons.lit {
-  color: #fff;
+/* The colon goes to nothing rather than to a colour — whatever is behind it shows
+   through, so light and dark need no separate case the way a white flash did. */
+.colons.out {
+  color: transparent;
   transition: none;
-}
-
-/* Dark is the default, where white is the brightest thing there is. In light mode
-   white is the page itself, so a white colon would read as a dropout rather than
-   a flash — the same jump in luminance, taken the other way. */
-html:not(.app-dark) .colons.lit {
-  color: var(--p-text-color);
 }
 </style>

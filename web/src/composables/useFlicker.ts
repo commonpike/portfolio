@@ -2,7 +2,7 @@ import { onScopeDispose, ref, type Ref } from 'vue'
 
 /**
  * The colons flicker: every 7.5 seconds or so, one or more of the `::` on the page
- * flashes for a moment. Decoration, and meant to be half-missed.
+ * drops out for a moment. Decoration, and meant to be half-missed.
  *
  * One timer for the whole page rather than one per title, because a round is the
  * event — four titles each on their own clock would flicker four times as often as
@@ -10,8 +10,8 @@ import { onScopeDispose, ref, type Ref } from 'vue'
  * them go up together.
  */
 
-/** How long a colon stays lit — long enough to catch, short enough to doubt. */
-const FLASH = 90
+/** How long a colon stays out — long enough to catch, short enough to doubt. */
+const BLINK = 90
 
 /** The wait between rounds: 7.5 seconds, give or take half of it. */
 const MIN = 5000
@@ -26,7 +26,7 @@ const lamps = new Set<Ref<boolean>>()
 let timer: ReturnType<typeof setTimeout> | undefined
 
 /**
- * Which lamps this round lights. Each one takes its own chance, so the number
+ * Which lamps this round puts out. Each one takes its own chance, so the number
  * varies — but never to none: a round nobody saw is a round wasted.
  */
 function pick(): Ref<boolean>[] {
@@ -40,7 +40,7 @@ function round(): void {
   const chosen = pick()
 
   chosen.forEach((lamp) => (lamp.value = true))
-  setTimeout(() => chosen.forEach((lamp) => (lamp.value = false)), FLASH)
+  setTimeout(() => chosen.forEach((lamp) => (lamp.value = false)), BLINK)
 
   schedule()
 }
@@ -50,27 +50,27 @@ function schedule(): void {
 }
 
 /**
- * Whether this title's colons are lit right now. The first caller starts the
+ * Whether this title's colons are out right now. The first caller starts the
  * timer and the last one to go stops it, so nothing ticks on a page without a
  * title on it.
  */
 export function useFlicker(): Ref<boolean> {
-  const lit = ref(false)
+  const out = ref(false)
 
   // Nothing at all where less motion was asked for: an unrequested blink is
   // precisely what that setting is about, and the site loses only a wink.
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    return lit
+    return out
   }
 
-  lamps.add(lit)
+  lamps.add(out)
 
   if (timer === undefined) {
     schedule()
   }
 
   onScopeDispose(() => {
-    lamps.delete(lit)
+    lamps.delete(out)
 
     if (lamps.size === 0) {
       clearTimeout(timer)
@@ -78,5 +78,5 @@ export function useFlicker(): Ref<boolean> {
     }
   })
 
-  return lit
+  return out
 }

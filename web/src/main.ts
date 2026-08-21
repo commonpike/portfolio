@@ -9,7 +9,7 @@ import '@/assets/main.css'
 import App from '@/App.vue'
 import router from '@/router'
 import { config } from '@/config'
-import { AuraBlue } from '@/theme'
+import { AuraRed } from '@/theme'
 import { DARK_CLASS } from '@/composables/useTheme'
 
 createApp(App)
@@ -19,7 +19,7 @@ createApp(App)
     // means it is also in the built bundle — unavoidable for a browser library.
     license: config.primevueLicense,
     theme: {
-      preset: AuraBlue,
+      preset: AuraRed,
       // Dark mode follows this class rather than the system, so the switch in the
       // header decides. useTheme() puts it on <html>.
       options: { darkModeSelector: `.${DARK_CLASS}` },

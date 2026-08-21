@@ -18,7 +18,7 @@ onMounted(() => void load())
  * earns its way into the shorter lists with a higher rank.txt.
  */
 const LEVELS = [
-  { label: 'some', value: 70 },
+  { label: 'some', value: 100 },
   { label: 'most', value: 50 },
   { label: 'all', value: 0 },
 ]
