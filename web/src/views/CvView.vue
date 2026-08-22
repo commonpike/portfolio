@@ -30,7 +30,7 @@ import SiteIntro from '@/components/SiteIntro.vue'
 
     <h3>Areas of Knowledge</h3>
     <ul>
-        <li><b>programming</b> 	( Node/Typescript/Javascript, PHP, Python, Java, XSLT, Actionscript, Perl )</li>
+        <li><b>programming</b> 	( Node/Typescript/Javascript, PHP, Python, Java, XSLT, Perl )</li>
       	<li><b>databases/cms</b> 	( MySQL, Drupal, Wordpress, ezPublish, FileMaker )</li>
         <li><b>markuplanguages</b>	( Json, XML, RDF, OWL, XUL )</li>
         <li><b>frameworks</b> 	( Vue, Symfony )</li>
@@ -74,9 +74,10 @@ import SiteIntro from '@/components/SiteIntro.vue'
     <h3>Areas of expertise</h3>
 	  <ul>
       <li>Information architecture</li>
-	    <li>Interface Design, front- & backend </li>
-	    <li>Project development and -management</li>
-      <li>Database & systemmanagement and -maintainance</li>
+      <li>Front- and backend development</li>
+	    <li>Interface Design</li>
+	    <li>Project development and management</li>
+      <li>Database & systemmanagement and maintainance</li>
     </ul>
 
     <h3>Autonomous Projects</h3>

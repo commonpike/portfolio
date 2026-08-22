@@ -11,17 +11,16 @@ import SiteIntro from '@/components/SiteIntro.vue'
     </p>
     <p>
       We used to build innovative interfaces, searching for novel and exciting ways to disclose
-      information. But people grew weary, they really just wanted to understand how a site worked so
+      information. But eventually people just wanted to understand how a site worked so
       they could get what they needed. Then, it had to do the same on mobile; then, there was SEO;
       then, there was the WCAG. <b>We went from innovation to compliance</b>. Plug your branding -
       logo, colors, font - into one of the dozen prefab layouts and it'll do.
     </p>
     <p>
-      We also used to build optimized yet meaningful ways to store your data to be future-proof and
-      quickly retrievable. But in the end, frameworks and platforms sit on that data and expose it
-      to frontends in unified ways, through standardized APIs. Artifical intelligence understands
-      meaning, but it prefers standards over custom logic.
-      <b>We went from quality to compliance</b>. Plug your current storage - spreadsheets,
+      We also used to build optimized yet meaningful ways to describe and archive your content.
+      But as the data kept changing, frameworks and platforms needed to exchange it
+      using ever more standardized APIs and protocols.
+      <b>We went from content quality to compliance</b>. Plug your current storage - spreadsheets,
       backoffices, frameworks - into one of the dozen prefab platforms and it'll do.
     </p>
     <p>

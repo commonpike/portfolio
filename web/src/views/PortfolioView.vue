@@ -6,11 +6,8 @@ import ProjectsListing from '@/components/ProjectsListing.vue'
 <template>
   <SiteIntro>
     <p class="lede">
-      Keeping track of everything I did is hard.
-      Projects overlap, get revived, linger on, die off.
-      Once they're out of sight, I often forget to take a screenshot,
-      make some notes. After all, it's online, people can
-      look there - until it's gone. But now it's here, or most of it.
+      Below is a quick overview of some of the
+      more interesting projects I've been working on in the past.
     </p>
   </SiteIntro>
 
