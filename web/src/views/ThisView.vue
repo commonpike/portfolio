@@ -70,7 +70,12 @@ import SiteIntro from '@/components/SiteIntro.vue'
       </p>
     </blockquote>
     <p>
-      <b>Thank you!</b>
+      <b>Thank you Claude!</b><br>
+    </p>
+    <p class="muted">
+      Source code for this portfolio is at <a href="https://github.com/commonpike/portfolio" target="_blank">
+        https://github.com/commonpike/portfolio
+      </a>
     </p>
   </SiteIntro>
 </template>

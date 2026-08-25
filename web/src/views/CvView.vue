@@ -7,15 +7,15 @@ import SiteIntro from '@/components/SiteIntro.vue'
 
     <p class="lede">
       <b>Pieter van Kemenade</b>, 1967-09-08 Nijmegen, NL<br>
-      <a href="https://pike.kw.nl" target="_blank">
-        https://pike.kw.nl
-      </a><br>
-      <a href="https://pike.kw.nl/portfolio/" target="_blank">
-        https://pike.kw.nl/portfolio/
-      </a><br>
-      <a href="https://www.linkedin.com/in/commonpike/" target="-blank">
-        https://www.linkedin.com/in/commonpike/
-      </a><br>
+      <!-- The mark sits outside the anchor: inside it, the link's underline would be
+           drawn straight through it. -->
+      <i class="pi pi-home icon" aria-hidden="true"></i><a href="https://pike.kw.nl" target="_blank">https://pike.kw.nl</a><br>
+      <i class="pi pi-images icon" aria-hidden="true"></i><a href="https://pike.kw.nl/portfolio/" target="_blank">https://pike.kw.nl/portfolio/</a><br>
+      <i class="pi pi-linkedin icon" aria-hidden="true"></i><a href="https://www.linkedin.com/in/commonpike/" target="_blank">https://www.linkedin.com/in/commonpike/</a><br>
+      <!-- PrimeIcons has no Stack Overflow glyph, so this one is the logo as a single
+           path, drawn in currentColor like the rest. -->
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.986 21.865v-6.404h2.134V24H1.844v-8.539h2.13v6.404h15.012zM6.111 19.731H16.85v-2.137H6.111v2.137zm.259-4.852l10.48 2.189.451-2.07-10.478-2.187-.453 2.068zm1.359-5.056l9.705 4.53.903-1.95-9.706-4.53-.902 1.936v.014zm2.715-4.785l8.217 6.855 1.359-1.62-8.216-6.853-1.35 1.617l-.01.001zM15.751 0l-1.746 1.294 6.405 8.604 1.746-1.294L15.749 0h.002z"/></svg><a href="https://stackoverflow.com/users/95733/commonpike" target="_blank">https://stackoverflow.com/users/95733/commonpike</a><br>
+      <i class="pi pi-github icon" aria-hidden="true"></i><a href="https://github.com/commonpike/" target="_blank">https://github.com/commonpike/</a><br>
 
       <br>
       Selfemployed in the partnership <b>"kennis Werkt"</b>, Rotterdam, NL
@@ -88,7 +88,7 @@ import SiteIntro from '@/components/SiteIntro.vue'
         </li>
         <li><b>2016-now:</b> coding graphic art and video as STDIO.PIKE: <a href="https://pike.kw.nl/stdio" target="_blank">https://pike.kw.nl/stdio</a></li>
         <li>
-          <b>2012-2016:</b> playing hammondkeyboards and organ in rockband Weltmeister
+          <b>2012-2016:</b> playing keyboards and organ in rockband Weltmeister
             (<a href="https://open.spotify.com/album/4nCXLM028qYLoo9bJ1BlQ3?si=cXN-_THOTYOOoAeleYD3Uw" target="_blank">Spotify</a>)
         </li>
         <li>
@@ -118,3 +118,29 @@ import SiteIntro from '@/components/SiteIntro.vue'
 
   </SiteIntro>
 </template>
+
+<style scoped>
+/* A mark for the service each address belongs to: flat, monochrome and a size down
+   from the text, so the lines are told apart at a glance without the top of the
+   page turning into a row of logos. Muted rather than in the link colour — it
+   labels the line, the address is what is clicked.
+
+   Every mark gets the same 1em box whatever the glyph's own width is, so the
+   addresses start at one left edge instead of a ragged one. */
+.icon {
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.5em;
+  font-size: 0.8em;
+  text-align: center;
+  color: var(--p-text-muted-color);
+}
+
+/* The drawn one is sized in em like the glyphs are, so it carries the same weight
+   and adds nothing to the line's height. */
+svg.icon {
+  height: 1em;
+  fill: currentColor;
+  vertical-align: -0.1em;
+}
+</style>

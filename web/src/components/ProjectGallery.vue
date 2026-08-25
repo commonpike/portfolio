@@ -118,12 +118,32 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
 <style scoped>
 /* The box takes the shape of the picture in it, which is what makes the height
    transition possible: an explicit ratio can be animated to the next one, where a
-   height of auto could not. */
+   height of auto could not.
+
+   A portrait picture would take that as licence to be taller than the window,
+   pushing the text beside it out of view and leaving the popup nothing but a
+   scrollbar, so the height is capped. The cap is spent on the *width* rather than
+   as a max-height: at `w / h` per unit of height, that width is the widest the box
+   can be without the ratio making it taller than the cap — so the box narrows and
+   the picture still fills it, where a max-height would have left it in a letterbox
+   the arrows no longer sit beside.
+
+   A box narrowed that far leaves room to one side of it in the column, and the
+   auto margins put that room on both sides instead of all of it on the right. Only
+   a capped picture has any to divide, so this centres the tall ones and leaves
+   every other one where it was — and the gallery is the popup's alone, so it is
+   the popup this happens in. */
 .gallery {
+  --cap: 68vh;
+
   position: relative;
   width: 100%;
+  max-width: calc(var(--cap) * (var(--shape, 4 / 3)));
+  margin-inline: auto;
   aspect-ratio: var(--shape, 4 / 3);
-  transition: aspect-ratio 0.3s ease;
+  transition:
+    aspect-ratio 0.3s ease,
+    max-width 0.3s ease;
 }
 
 /* The picture fits whatever the box is mid-transition, so it scales with it
@@ -140,6 +160,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKey))
    picture does not collapse the popup's first column to nothing. */
 .gallery.empty {
   display: flex;
+  max-width: none;
   aspect-ratio: 4 / 3;
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius, 0.75rem);

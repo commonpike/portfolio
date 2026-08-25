@@ -259,10 +259,16 @@ function openOnKey(event: KeyboardEvent): void {
   font-size: 0.8125rem;
 }
 
+/* A URL is one long word as far as wrapping goes, so a deep one runs past the card
+   rather than falling to a second line — out of the thumbnail's track, which has a
+   floor of its own and will not widen for it. Breaking mid-word is the one way to
+   wrap it: ugly at the break, but the address stays readable in full, where an
+   ellipsis would have cut off the part that says which page it is. */
 .link {
   margin-top: 0.35rem;
   font-family: var(--font-mono);
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .link:hover {
