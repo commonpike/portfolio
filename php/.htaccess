@@ -1,0 +1,20 @@
+# This folder is deployed inside the web root — the site fetches json.php over
+# HTTP — which means everything beside it is reachable over HTTP too. Nothing
+# else here is meant to be: Portfolio.php is a library, markdown.php prints to a
+# terminal, and import.php *writes* to the asset root.
+#
+# So: closed, with one door. A new exporter that answers to HTTP gets its own
+# <Files> block; one that doesn't, needs nothing.
+#
+# Apache 2.4 syntax. On 2.2 this is `Order deny,allow` / `Deny from all`, with
+# `Allow from all` in the block below.
+
+Require all denied
+
+<Files "json.php">
+  Require all granted
+</Files>
+
+# cache/ sits under this directory, so it is already denied. It still has to be
+# writable by the web server user, or every request rescans the asset root —
+# json.php treats a cache it cannot write as no cache at all, not as an error.

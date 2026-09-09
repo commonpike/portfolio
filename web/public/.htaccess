@@ -1,0 +1,47 @@
+# Apache configuration for the built site. It sits in public/, so `vite build`
+# copies it into dist/ verbatim, next to the index.html it is about — the file is
+# inert in this repository and only means anything where dist/ is deployed.
+#
+# Two jobs: hand unknown paths to index.html, so a refresh of /cv works at all,
+# and keep the files the page fetches out of search results without keeping
+# crawlers out of them.
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Deliberately no RewriteBase. A relative target in a per-directory .htaccess
+  # resolves against the directory the file is in, so this works at a domain's
+  # root and under /portfolio/ alike — the same thing VITE_BASE_URL does for the
+  # bundle, without having to be told twice. Add `RewriteBase /portfolio/` if the
+  # site is reached through an Alias or a symlink, where Apache cannot infer it.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Not a file and not a folder, so it is one of the app's routes. The browser
+  # resolves it once index.html has loaded.
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # content/*.html and php/json.php are fetched by the page rather than visited,
+  # and neither reads as a page on its own. They must stay *crawlable* all the
+  # same: blocked in robots.txt, a rendering crawler would fetch nothing and
+  # index an empty site. So they are excluded here, at the one place that can
+  # exclude a URL without hiding it.
+  #
+  # FilesMatch matches the basename, not the path, so index.html is caught by
+  # this too and given itself back on the next line.
+  <FilesMatch "\.(html|json|php)$">
+    Header set X-Robots-Tag "noindex"
+  </FilesMatch>
+
+  <Files "index.html">
+    Header unset X-Robots-Tag
+    # Every deploy rewrites it, and it names the hashed bundle: never stale.
+    Header set Cache-Control "no-cache"
+  </Files>
+</IfModule>

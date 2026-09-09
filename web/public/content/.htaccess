@@ -1,0 +1,5 @@
+# These are edited in place on the server — that is the whole point of them — so
+# a browser must revalidate rather than serve the copy it already has.
+<IfModule mod_headers.c>
+  Header set Cache-Control "no-cache"
+</IfModule>
