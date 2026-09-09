@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import SiteIntro from '@/components/SiteIntro.vue'
+import PageContent from '@/components/PageContent.vue'
 import ProjectsListing from '@/components/ProjectsListing.vue'
 </script>
 
 <template>
   <SiteIntro>
-    <p class="lede">
-      Below is a quick overview of some of the
-      more interesting projects I've been working on in the past.
-    </p>
+    <PageContent name="portfolio" />
   </SiteIntro>
 
   <ProjectsListing />

@@ -32,6 +32,19 @@ export function missingSettings(): string[] {
 }
 
 /**
+ * Where a page's copy is fetched from: content/<name>.html, under whatever base
+ * the site is hosted at. Those files sit in public/, so the build copies them
+ * into dist/ verbatim and they stay editable where the site is served from —
+ * which is the whole reason the copy is not in the templates.
+ *
+ * BASE_URL rather than a setting of its own: Vite writes it from VITE_BASE_URL,
+ * it is the same base the router runs on, and content moves with the site.
+ */
+export function contentUrl(name: string): string {
+  return `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/content/${name}.html`
+}
+
+/**
  * A usable URL for one of the paths in a project's images, files or preview.
  * They arrive relative to the asset root ("2012/wereldkiezer/preview.jpg"),
  * which is not the web root, so they only resolve against the asset base URL.

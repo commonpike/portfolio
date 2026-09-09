@@ -2,7 +2,9 @@
 
 The portfolio as a single-page app: Vue 3, TypeScript, Vite, PrimeVue. It holds no
 data of its own — it fetches the whole listing from the JSON exporter in `../php`
-and does its filtering, sorting and paging in the browser.
+and does its filtering, sorting and paging in the browser. Its pages' copy is
+fetched too, from the HTML fragments in `public/content/`, so the text can be
+edited where the site is served from; see [The copy](#the-copy).
 
 ## Configuration
 
@@ -115,8 +117,13 @@ produces the data.
 ## Layout
 
 ```
+public/
+  content/
+    portfolio.html        the copy for each page, fetched at runtime
+    cv.html
+    this.html
 src/
-  config.ts               the .env settings, and assetUrl() for media paths
+  config.ts               the .env settings, assetUrl() and contentUrl()
   types.ts                Project, mirroring the PHP class of the same name
   router.ts               the three pages, and their titles
   theme.ts                Aura, in blue
@@ -131,6 +138,7 @@ src/
   components/
     SiteHeader.vue        the nav, with the theme switch
     SiteIntro.vue         a page's heading, with its copy slotted in
+    PageContent.vue       one file from content/, fetched and rendered
     PageTitle.vue         a title with its :: in the primary colour
     ProjectsListing.vue   filters, paging, and the projects by year
     ProjectCard.vue       one project, in either view
@@ -142,6 +150,53 @@ src/
 A page is one entry in `src/router.ts`: the title there is the whole of its
 identity — nav text, heading and `document.title` all read it, which is why
 `about::this` can differ from `pike::portfolio` in more than its last word.
+
+### The copy
+
+A page's prose is not in its `.vue` file. It is an HTML fragment under
+`public/content/`, and the view is a `<PageContent name="cv" />` inside
+`SiteIntro`'s slot, which fetches it and renders it:
+
+```
+public/content/cv.html   →   dist/content/cv.html   →   fetched by /cv
+```
+
+Vite copies `public/` into `dist/` verbatim, so those three files land beside
+`index.html` on the server as the files they are. That is the point of the
+arrangement: fixing a typo, adding a line to the CV or rewriting an intro is
+editing one of them in place on the live server — no `npm run build`, no
+reuploading a bundle, and none of it needs this repository.
+
+Two things follow from that.
+
+**A deploy must not overwrite them.** They are tracked in git and shipped in every
+build, so a full `rsync` of `dist/` puts the repository's copy back over whatever
+was edited on the server. Exclude them, and the two versions never fight:
+
+```sh
+rsync -a --exclude=content/ web/dist/ <server>:<webroot>/
+```
+
+Bring an edit back the other way when it is worth keeping — copy the file into
+`public/content/` and commit it — or accept that the live text is the live text.
+
+**A fragment is trusted markup.** It is rendered with `v-html`, which is safe here
+and only here: the files ship with the site and are served from its own origin,
+and nothing user-supplied ever reaches them. Don't point `PageContent` at anything
+that isn't yours.
+
+They are fetched with `cache: 'no-cache'`, so the browser revalidates rather than
+serving a stale copy from disk — an edit shows up on the next reload. `contentUrl()`
+in `src/config.ts` builds the URL from `BASE_URL`, the same base the router runs
+on, so the content moves with the site into a subdirectory without a setting of
+its own. If a file is missing the page says so, in place, rather than rendering
+blank.
+
+Beyond plain HTML a fragment can use `lede` for an opening block, `muted` for
+quieter text, `icon` for the mark in front of an address and `comment` for a block
+set apart as a quote. The first two are global in `assets/main.css`; the last two
+are in `PageContent.vue`, behind `:deep()`, because `v-html` content carries no
+scope attribute of its own.
 
 Every `::` in a title flickers: every 5 to 10 seconds one or more of them flashes
 for 90ms, white against the dark or near-black against the light — a jump in
