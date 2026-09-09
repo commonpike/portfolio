@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { useRoute, useRouter, type LocationQueryRaw, type LocationQueryValue } from 'vue-router'
 import Button from 'primevue/button'
 import ListingSelect from '@/components/ListingSelect.vue'
 import ListingPager from '@/components/ListingPager.vue'
@@ -30,10 +31,101 @@ const LIMITS = [
   { label: 'all', value: 'all' as number | 'all' },
 ]
 
-const type = ref('all')
-const level = ref(LEVELS[1]!.value)
-const limit = ref<number | 'all'>(10)
-const page = ref(0)
+/**
+ * What each of the four means when its parameter is absent — which is the only
+ * state a crawler ever sees, since nothing links to a filtered listing.
+ */
+const DEFAULTS = {
+  type: 'all',
+  level: LEVELS[1]!.value,
+  limit: LIMITS[0]!.value,
+  page: 0,
+}
+
+const route = useRoute()
+const router = useRouter()
+
+/**
+ * The listing's state lives in the query string, which is what gives every page
+ * of it an address — the pager is a row of links to them, so a crawler reaches
+ * the whole portfolio rather than the first ten projects.
+ *
+ * The filters are in there for the reader rather than the crawler: a filtered
+ * listing is worth sharing, and the back button undoes a change. Only the pager
+ * emits links, so the URLs anything can crawl are ?page=N at the default filters
+ * and nothing else — the combinations stay out of an index. A value at its
+ * default writes no parameter at all, so the first page of an unfiltered listing
+ * is a bare /portfolio/.
+ *
+ * Each of them is a writable computed, which v-model takes exactly like a ref.
+ */
+
+/** The first value of a parameter, whatever shape ?type=a&type=b arrived in. */
+function text(value: LocationQueryValue | LocationQueryValue[] | undefined): string {
+  return (Array.isArray(value) ? value[0] : value) ?? ''
+}
+
+/** A parameter's value, or undefined when it is the default and can be left out. */
+function unless<T>(value: T, fallback: T): string | undefined {
+  return value === fallback ? undefined : String(value)
+}
+
+/**
+ * Writes the parameters that changed and drops the ones back at their default.
+ * Filters replace rather than push: a dropdown is an adjustment, and three of
+ * them in a row should not be three presses of the back button. The pager pushes,
+ * because moving to page two is a move.
+ */
+function write(changes: LocationQueryRaw, method: 'push' | 'replace' = 'replace'): void {
+  const query: LocationQueryRaw = { ...route.query, ...changes }
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined) {
+      delete query[key]
+    }
+  }
+
+  void router[method]({ query })
+}
+
+/**
+ * Every reader falls back to the default rather than trusting what it finds:
+ * these are values a stranger can type, and the listing is not the place to
+ * discover that ?limit=-1 was possible.
+ */
+const type = computed({
+  get: () => text(route.query.type) || DEFAULTS.type,
+  /**
+   * Picking a type widens "Show" to its last level, 'all'. The two filters
+   * multiply, and a type holding nothing ranked above the current threshold
+   * would otherwise answer with an empty listing.
+   */
+  set: (value: string) =>
+    write({
+      type: unless(value, DEFAULTS.type),
+      level: value === DEFAULTS.type ? undefined : unless(LEVELS.at(-1)!.value, DEFAULTS.level),
+      page: undefined,
+    }),
+})
+
+const level = computed({
+  get: () => LEVELS.find((o) => String(o.value) === text(route.query.level))?.value ?? DEFAULTS.level,
+  set: (value: number) => write({ level: unless(value, DEFAULTS.level), page: undefined }),
+})
+
+const limit = computed({
+  get: () => LIMITS.find((o) => String(o.value) === text(route.query.limit))?.value ?? DEFAULTS.limit,
+  set: (value: number | 'all') => write({ limit: unless(value, DEFAULTS.limit), page: undefined }),
+})
+
+const page = computed({
+  get: () => {
+    const asked = Number(text(route.query.page))
+
+    return Number.isInteger(asked) && asked > 0 ? asked : DEFAULTS.page
+  },
+  set: (value: number) => write({ page: unless(value, DEFAULTS.page) }, 'push'),
+})
 
 /** How a project is drawn: 'grid' as a thumbnail, 'list' in detail. Detail first. */
 const view = ref<'grid' | 'list'>('list')
@@ -99,24 +191,17 @@ const years = computed(() => {
 })
 
 /**
- * Picking a type widens "Show" to its last level, 'all'. The two filters
- * multiply, and a type that holds nothing ranked above the current threshold
- * would otherwise answer with an empty listing.
+ * A page number out of range — ?page=99, or a filter narrowed elsewhere — comes
+ * back to the last page there is. It waits for the fetch: until the projects are
+ * in, every listing is one page long and a perfectly good ?page=2 would be
+ * clamped away before it could be honoured.
+ *
+ * Replacing rather than pushing, because arriving at a page that isn't there is
+ * not a move the reader made and should not be one the back button undoes.
  */
-watch(type, (value) => {
-  if (value !== 'all') {
-    level.value = LEVELS.at(-1)!.value
-  }
-})
-
-// Narrowing the list can strand you past its end; go back to the first page.
-watch([type, level, limit], () => {
-  page.value = 0
-})
-
-watch(pageCount, (count) => {
-  if (page.value > count - 1) {
-    page.value = count - 1
+watch([pageCount, loading], ([count, busy]) => {
+  if (!busy && page.value > count - 1) {
+    write({ page: unless(count - 1, DEFAULTS.page) })
   }
 })
 
@@ -157,7 +242,7 @@ watch(page, () => {
         </button>
       </div>
 
-      <ListingPager v-model="page" :page-count="pageCount" />
+      <ListingPager :page="page" :page-count="pageCount" />
     </header>
 
     <p class="muted tally">
@@ -195,7 +280,7 @@ watch(page, () => {
 
     <footer class="bar bottom">
       <ListingSelect v-model="limit" label="Limit" :options="LIMITS" />
-      <ListingPager v-model="page" :page-count="pageCount" />
+      <ListingPager :page="page" :page-count="pageCount" />
     </footer>
 
     <ProjectDialog :project="opened" @close="opened = null" />

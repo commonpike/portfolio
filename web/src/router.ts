@@ -39,7 +39,13 @@ export const pages: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [...pages, { path: '/:pathMatch(.*)*', redirect: '/' }],
-  scrollBehavior: () => ({ top: 0 }),
+  /**
+   * A new page starts at the top. A change of query string on the page you are
+   * already on does not: that is the listing being paged or filtered, and it
+   * scrolls to its own top edge, which leaves the filters in view where the top
+   * of the document would show the heading instead.
+   */
+  scrollBehavior: (to, from) => (to.path === from.path ? false : { top: 0 }),
 })
 
 router.afterEach((to) => {
